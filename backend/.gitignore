@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+data/*.db
+data/*.db-*
+.pytest_cache/
+.ruff_cache/
+logs/execution_trace.jsonl
+logs/exam_run/

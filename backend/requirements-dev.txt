@@ -1,0 +1,2 @@
+# Kept for compatibility: everything (including test/lint tools) now lives in requirements.txt.
+-r requirements.txt
