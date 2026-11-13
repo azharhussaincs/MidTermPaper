@@ -7,6 +7,7 @@ Unknown keys are rejected (`extra="forbid"`) so a tool call can't silently store
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, Literal
@@ -62,6 +63,60 @@ def parse_domain(value: str | AssessmentDomain) -> AssessmentDomain:
             return DOMAIN_ALIASES[key]
     valid = ", ".join(d.value for d in AssessmentDomain)
     raise ValueError(f"Unknown domain {value!r}; expected one of: {valid}")
+
+
+# A free-text field records the person's own words. A bare option label ("More than half the days",
+# "Yes", "7 out of 10") there is a reply to a different question, usually a one-tap answer to an open
+# clarification: rejecting it makes the model ask again instead of filing it as a description.
+_OPTION_ONLY = re.compile(
+    r"^(not at all|several days|more than half (of )?the days|nearly every day|yes|no|sometimes|not sure|maybe"
+    r"|\d+(\s*(out of|/)\s*10)?)[.!]?$",
+    re.IGNORECASE,
+)
+OPTION_ONLY_ERROR = (
+    "This is a one-tap option answer, not a description in the person's own words. Do not store it here: "
+    "ask them to describe it in their own words, or store the option in the field it actually answers."
+)
+FREE_TEXT_FIELDS = ("mood_description", "notes", "narrative")
+
+
+def option_only_fields(data: dict[str, Any]) -> list[str]:
+    """Free-text fields in an incoming answer that hold only an option label (checked on store, not on load)."""
+    return [
+        f for f in FREE_TEXT_FIELDS if isinstance(data.get(f), str) and _OPTION_ONLY.match(data[f].strip())
+    ]
+
+
+# Items a patient rarely mentions unprompted, keyed to the words that show the topic was discussed.
+# A value for one of these may only be stored once the patient has talked about the topic or was
+# asked about it, so the agent cannot infer it from other answers (e.g. severe work impact →
+# "self-care significantly neglected"), which would feed the risk rules with invented data.
+_TOPIC_WORDS: dict[str, re.Pattern[str]] = {
+    "energy_level": re.compile(
+        r"energ|tired|exhaust|fatigu|drained|worn out|sluggish|lethargic", re.IGNORECASE
+    ),
+    "self_care": re.compile(
+        r"self[- ]?care|look(ing)? after (my|your)self|take care of (my|your)self|hygiene|shower|wash|bath"
+        r"|groom|dress|eat|meal|cook|clean|chores|brush",
+        re.IGNORECASE,
+    ),
+}
+UNGROUNDED_ERROR = (
+    "The person has not talked about this and was not asked about it. Never infer it from other answers: "
+    "store the other fields now and ask them about this item in your next question."
+)
+
+
+def ungrounded_fields(data: dict[str, Any], exchanges: list[tuple[str | None, str]]) -> list[str]:
+    """Fields in an incoming answer whose topic appears in no (question, patient reply) pair so far."""
+    return [
+        field
+        for field, words in _TOPIC_WORDS.items()
+        if data.get(field) is not None
+        and not any(
+            words.search(answer) or (question and words.search(question)) for question, answer in exchanges
+        )
+    ]
 
 
 class _DomainModel(BaseModel):

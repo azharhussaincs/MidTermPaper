@@ -1,8 +1,8 @@
 import { ArrowRight, Plus, X } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
-import { api, errorMessage } from '../../api/client'
+import { api, ApiError, errorMessage } from '../../api/client'
 import { timeAgo } from '../../lib/format'
-import { buttonClass, cn } from '../../lib/styles'
+import { buttonClass, cn, EYEBROW, INPUT } from '../../lib/styles'
 import type { AssessmentDetail, AssessmentListItem } from '../../types/api'
 import { Drawer } from '../Drawer'
 import { ErrorNotice, StatusBadge } from '../ui'
@@ -25,8 +25,8 @@ export function SessionDrawer({ open, onOpenChange, sessions, selectedId, onSele
       <div className="flex min-h-full flex-col">
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-ink">Sessions</h2>
-            <p className="text-xs text-slate-500">Start a new assessment or pick up where you left off.</p>
+            <h2 className="text-base font-semibold text-ink">Your check-ins</h2>
+            <p className="text-sm text-muted">Start a new one or continue where you left off.</p>
           </div>
           <button type="button" autoFocus onClick={() => onOpenChange(false)} className={buttonClass('ghost', 'sm')} aria-label="Close sessions">
             <X aria-hidden className="size-4" />
@@ -48,6 +48,12 @@ export function SessionDrawer({ open, onOpenChange, sessions, selectedId, onSele
   )
 }
 
+const ALIAS_RULE = 'Please use an anonymous code with at least one number, such as anon-417 or blue-28, not your name.'
+
+function isAnonymousCode(value: string): boolean {
+  return /^[A-Za-z0-9][A-Za-z0-9_-]{2,31}$/.test(value) && /\d/.test(value)
+}
+
 export function NewSessionForm({ onCreated, prominent = false }: { onCreated: (detail: AssessmentDetail) => void; prominent?: boolean }) {
   const aliasId = useId()
   const hintId = useId()
@@ -57,13 +63,19 @@ export function NewSessionForm({ onCreated, prominent = false }: { onCreated: (d
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const code = alias.trim()
+    // Same rule as the backend (schemas/sessions.py); checked here so a name is never sent at all.
+    if (code && !isAnonymousCode(code)) {
+      setError(ALIAS_RULE)
+      return
+    }
     setBusy(true)
     setError(null)
     try {
-      onCreated(await api.assessments.start({ patient_alias: alias.trim() || null }))
+      onCreated(await api.assessments.start({ patient_alias: code || null }))
       setAlias('')
     } catch (err) {
-      setError(errorMessage(err))
+      setError(err instanceof ApiError && err.fieldErrors.length ? err.fieldErrors.map((e) => e.message.replace(/^Value error, /, '')).join(' ') : errorMessage(err))
     } finally {
       setBusy(false)
     }
@@ -71,24 +83,28 @@ export function NewSessionForm({ onCreated, prominent = false }: { onCreated: (d
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
-      <label htmlFor={aliasId} className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-        Patient alias <span className="font-normal normal-case tracking-normal text-slate-400">(optional)</span>
+      <label htmlFor={aliasId} className={EYEBROW}>
+        Nickname or code <span className="font-normal normal-case tracking-normal text-slate-400">(optional)</span>
       </label>
-      <div className="flex gap-2">
+      <div className={cn('flex gap-2', prominent && 'flex-col')}>
         <input
           id={aliasId}
           value={alias}
-          onChange={(e) => setAlias(e.target.value)}
-          maxLength={128}
+          onChange={(e) => {
+            setAlias(e.target.value)
+            setError(null)
+          }}
+          maxLength={32}
+          aria-invalid={error === ALIAS_RULE || undefined}
           placeholder="e.g. anon-417"
           aria-describedby={hintId}
           autoComplete="off"
-          className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-white px-3 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-teal-100"
+          className={cn(INPUT, prominent ? 'h-12' : 'h-10 flex-1', 'min-w-0')}
         />
-        <button type="submit" disabled={busy} className={buttonClass('primary')}>
+        <button type="submit" disabled={busy} className={buttonClass('primary', prominent ? 'lg' : 'md')}>
           {prominent ? (
             <>
-              Begin <ArrowRight aria-hidden className="size-4" />
+              Start check-in <ArrowRight aria-hidden className="size-4" />
             </>
           ) : (
             <>
@@ -97,8 +113,10 @@ export function NewSessionForm({ onCreated, prominent = false }: { onCreated: (d
           )}
         </button>
       </div>
-      <p id={hintId} className="text-xs text-slate-500">
-        Use an anonymised ID, never a real name. One is created for you if left blank.
+      <p id={hintId} className="text-xs leading-relaxed text-muted">
+        Not your name. This anonymous code is how you find your check-in again, and it is what the clinician sees instead of your
+        identity. Use letters and at least one number (e.g. <span className="font-medium text-ink">blue-28</span>), or leave it blank and
+        we&apos;ll create one for you.
       </p>
       {error && <ErrorNotice message={error} />}
     </form>
@@ -116,7 +134,7 @@ interface SessionGroupProps {
 function SessionGroup({ title, empty, items, selectedId, onSelect }: SessionGroupProps) {
   return (
     <section className="space-y-2">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+      <h3 className={EYEBROW}>
         {title} {items.length > 0 && <span className="font-normal">({items.length})</span>}
       </h3>
       {items.length === 0 ? (
@@ -140,12 +158,12 @@ function SessionGroup({ title, empty, items, selectedId, onSelect }: SessionGrou
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-ink">{item.patient_alias ?? 'anonymous'}</span>
-                  <span className="flex items-center gap-2 text-xs text-slate-500">
-                    <StatusBadge status={item.status} patientFacing />
+                  <span className="flex items-center gap-2 text-xs text-muted">
+                    <StatusBadge status={item.status} urgent={item.urgent} />
                     {timeAgo(item.updated_at)}
                   </span>
                 </span>
-                <span className="text-xs font-semibold tabular-nums text-slate-500">{Math.round(item.completion_pct)}%</span>
+                <span className="text-xs font-semibold tabular-nums text-muted">{Math.round(item.completion_pct)}%</span>
               </button>
             </li>
           ))}

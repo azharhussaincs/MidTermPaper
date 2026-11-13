@@ -1,0 +1,29 @@
+flowchart LR
+    subgraph Frontend["React 19 + TypeScript + Tailwind (Vite)"]
+        PW[Patient check-in]
+        CW[Clinician review workspace]
+        TB[LLM engine control]
+    end
+    subgraph Backend["FastAPI (Python 3.11)"]
+        API[REST API<br/>/api/system · /api/assessments · /api/clinician]
+        WF[Workflow API<br/>run_assessment_turn · finalize_session · submit_clinician_review]
+        G[LangGraph StateGraph]
+        T[4 assessment tools]
+        AU[Deterministic audit engine<br/>missing · inconsistencies · risk]
+        LLM[Hybrid LLM manager]
+        EL[Execution logger<br/>JSONL trace]
+    end
+    subgraph Storage["SQLite"]
+        DB[(mental_health_agent.db<br/>AssessmentRecord)]
+        CK[(langgraph_checkpoints.db<br/>SqliteSaver)]
+    end
+    OL[Ollama<br/>local]
+    GE[Google Gemini<br/>cloud]
+
+    PW & CW & TB -->|fetch JSON| API --> WF --> G
+    G --> T --> DB
+    T --> AU
+    G --> AU
+    G <-->|checkpoint per turn| CK
+    G --> LLM --> OL & GE
+    WF --> EL

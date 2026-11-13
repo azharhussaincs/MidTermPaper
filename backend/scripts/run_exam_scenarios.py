@@ -140,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
     _print_summary(run)
     if args.seed_ui:
         print(
-            "\nSeeded. Start the backend and frontend, then open the Patient Intake and Clinician Review tabs."
+            "\nSeeded. Start the backend and frontend, then open the Patient check-in and Clinician review tabs."
         )
         return 0
 

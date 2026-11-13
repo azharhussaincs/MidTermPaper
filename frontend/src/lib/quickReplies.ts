@@ -25,11 +25,41 @@ function scale(from: number, to: number, suffix: string): QuickReplySet['options
 
 const asOptions = (labels: string[]) => labels.map((label) => ({ label, value: label }))
 
+/**
+ * The part of the message that asks: the last sentence ending in "?" (with any bracketed options).
+ * Preamble is ignored, so "you said more than half the days. Could you tell me more?" is an open
+ * question, not a frequency item.
+ */
+function askedPart(message: string): string {
+  const end = message.lastIndexOf('?')
+  if (end < 0) return ''
+  const before = message.slice(0, end)
+  // Start after the last sentence end that is not inside the question's own brackets.
+  const start = Math.max(before.lastIndexOf('. '), before.lastIndexOf('! '), before.lastIndexOf('\n'))
+  let asked = message.slice(start + 1, end + 1).trim()
+  // "...how often...? (Not at all, several days, ...?)": the options belong to the previous question.
+  if (asked.startsWith('(')) {
+    const prev = message.slice(0, message.lastIndexOf('(')).trim()
+    asked = `${askedPart(prev)} ${asked}`
+  }
+  return asked
+}
+
 export function detectQuickReplies(question: string | null | undefined): QuickReplySet | null {
   if (!question) return null
-  const text = question.toLowerCase()
+  const text = askedPart(question).toLowerCase()
+  if (!text) return null
 
-  if (/how often|over the (last|past) (two|2) weeks|several days|nearly every day|more than half/.test(text)) {
+  // Open questions first: "How have you been feeling over the last two weeks?" mentions the time
+  // window but is not a frequency item, and frequency chips there get stored as a screening answer.
+  if (/how have you been feeling|how are you feeling/.test(text)) {
+    return {
+      kind: 'opener',
+      label: 'Start with a few words, or type your own',
+      options: asOptions(['Mostly okay', 'Up and down', "I've been struggling", 'Not sure how to describe it']),
+    }
+  }
+  if (/how often|several days|nearly every day|more than half/.test(text)) {
     return { kind: 'frequency', label: 'How often, over the last 2 weeks', options: asOptions(FREQUENCY_OPTIONS) }
   }
   const range = /\b(0|1)\b[^.?]{0,24}\bto\s*10\b|out of 10|\/10/.exec(text)
@@ -54,15 +84,7 @@ export function detectQuickReplies(question: string | null | undefined): QuickRe
       options: asOptions(['Not at all', 'A little', 'Moderately', 'Severely']),
     }
   }
-  if (/how have you been feeling|how are you feeling/.test(text)) {
-    return {
-      kind: 'opener',
-      label: 'Start with a few words, or type your own',
-      options: asOptions(["Mostly okay", "Up and down", "I've been struggling", 'Not sure how to describe it']),
-    }
-  }
-  const lastQuestion = text.split(/(?<=[.!])\s+/).findLast((s) => s.trim().endsWith('?')) ?? ''
-  if (/^(do|did|have|has|are|is|were|was) you\b/.test(lastQuestion.trim()) && !/anything else/.test(lastQuestion)) {
+  if (/^(do|did|have|has|are|is|were|was) you\b/.test(text) && !/anything else/.test(text)) {
     return { kind: 'yesno', label: 'Quick answer', options: asOptions(['Yes', 'No', 'Sometimes', 'Not sure']) }
   }
   return null

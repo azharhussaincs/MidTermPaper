@@ -348,7 +348,7 @@ def run_scenario(
         state = get_session_state(session_id, graph=graph)
         if scenario.finalize_early and state["pending_review"] is None:
             turn_results.append(finalize_session(session_id, graph=graph))
-        elif mode == "live" and scenario.clinician_review and state["pending_review"] is None:
+        elif mode == "live" and not scenario.resume_turns and state["pending_review"] is None:
             notes.append("Live model did not complete every field; submitted early to produce the summary.")
             turn_results.append(finalize_session(session_id, graph=graph))
 

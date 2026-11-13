@@ -53,7 +53,8 @@ export function Drawer({ open, onOpenChange, label, children }: DrawerProps) {
     const sheet = sheetRef.current
     if (!dialog || !scroller || !sheet) return
 
-    const visible = 1 / window.innerWidth
+    // innerWidth can read 0 (hidden or resizing frame); 1/0 is an invalid threshold and throws.
+    const visible = 1 / Math.max(window.innerWidth, 1)
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries.at(-1)

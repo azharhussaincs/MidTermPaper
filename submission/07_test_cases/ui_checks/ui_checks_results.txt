@@ -1,0 +1,18 @@
+PASS 375px safety: crisis heading visible on open without scrolling  (y=128)
+PASS 375px safety: crisis line link visible on open
+PASS 375px safety: exactly one crisis banner
+PASS 375px safety: confirmation card does not repeat crisis contacts
+PASS 375px pause: paused card shown
+PASS 375px resume: Continue focuses the answer box  (TEXTAREA)
+PASS 375px pause: paused state persists after reload
+PASS 375px evidence: source patient message highlighted and in view
+PASS 1440px safety: crisis heading visible on open without scrolling  (y=77)
+PASS 1440px safety: crisis line link visible on open
+PASS 1440px safety: exactly one crisis banner
+PASS 1440px safety: confirmation card does not repeat crisis contacts
+PASS 1440px pause: paused card shown
+PASS 1440px resume: Continue focuses the answer box  (TEXTAREA)
+PASS 1440px pause: paused state persists after reload
+PASS 1440px evidence: source patient message highlighted and in view
+
+16/16 UI checks passed

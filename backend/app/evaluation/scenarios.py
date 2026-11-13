@@ -175,11 +175,10 @@ CONFLICTING = ExamScenario(
         ScriptedTurn(
             "Well, actually I get really bad panic attacks most days and I'm only sleeping about 2 hours a "
             "night. I haven't been able to work at all this month and I barely see anyone.",
-            [store("anxiety", panic_attacks="frequent", physical_symptoms=["racing heart", "shortness of breath"]),
-             store("sleep", average_sleep_hours=2, sleep_quality="very_poor", reports_sleep_problems=True,
-                   wakes_unrefreshed=True),
-             store("functioning", work_study_impact="severe", social_engagement="minimal", energy_level=2,
-                   self_care="somewhat_neglected", days_missed_last_month=20),
+            # Only what the patient actually said; sleep quality, energy and self-care are asked below.
+            [store("anxiety", panic_attacks="frequent"),
+             store("sleep", average_sleep_hours=2, reports_sleep_problems=True),
+             store("functioning", work_study_impact="severe", social_engagement="minimal"),
              audit()],
             "Thank you for telling me; that sounds really difficult. Earlier you mentioned stress at 0 out of "
             "10. Could you tell me a bit more about how things feel overall, and what support you'd want?",
@@ -191,8 +190,16 @@ CONFLICTING = ExamScenario(
                    "attacks, very little sleep and being unable to work.",
                    support_goals=["restore sleep", "return to work"]),
              audit()],
-            "Thank you for being so open with me. I have what I need and will prepare a summary for a "
-            "professional to review.",
+            "Thank you for being so open. A few last questions: how would you rate the quality of your sleep, "
+            "your energy from 1 to 10, and how well are you keeping up with things like eating and washing?",
+        ),
+        ScriptedTurn(
+            "Sleep quality is very poor. My energy is about 3 out of 10, and I'm only just keeping up with "
+            "eating and washing.",
+            [store("sleep", sleep_quality="very_poor"),
+             store("functioning", energy_level=3, self_care="somewhat_neglected"),
+             audit()],
+            "Thank you. I have what I need and will prepare a summary for a professional to review.",
         ),
     ],
 )  # fmt: skip

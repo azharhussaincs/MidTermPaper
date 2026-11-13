@@ -30,9 +30,10 @@ export function riskLabel(code: string): string {
 export interface RiskAlert {
   level: RiskLevel
   urgent: boolean
-  labels: string[]
-  /** The patient's words (for free-text triggers) or the structured evidence. */
-  evidence: string
+  /** One risk type per alert, e.g. "Panic language". */
+  label: string
+  /** Distinct triggers for this risk type: the patient's words or the structured evidence. */
+  evidence: string[]
   quoted: boolean
   action: string | null
 }
@@ -40,7 +41,7 @@ export interface RiskAlert {
 /** Strips "User said:" / "Wrote:" and the "…" padding so identical triggers compare equal. */
 function normaliseEvidence(evidence: string): { text: string; quoted: boolean } {
   const match = /^(User said|Wrote):\s*(.*)$/s.exec(evidence.trim())
-  if (!match) return { text: evidence.trim(), quoted: false }
+  if (!match) return { text: evidence.trim().replaceAll('_', ' ').replaceAll('=', ': '), quoted: false }
   return { text: match[2].replace(/^\.\.\.|\.\.\.$/g, '').trim(), quoted: true }
 }
 
@@ -59,49 +60,62 @@ function sameTrigger(a: string, b: string): boolean {
   return false
 }
 
-/**
- * One alert per distinct trigger. Several lexicons often fire on the same sentence
- * ("hopeless … ending my life" → self-harm + hopelessness); those become one alert listing both.
- */
+function addEvidence(alert: RiskAlert, text: string): void {
+  const index = alert.evidence.findIndex((known) => sameTrigger(known, text))
+  if (index < 0) alert.evidence.push(text)
+  else if (text.length > alert.evidence[index].length) alert.evidence[index] = text // keep the fullest quote
+}
+
+function sortAlerts(alerts: RiskAlert[]): RiskAlert[] {
+  return alerts.sort((a, b) => Number(b.urgent) - Number(a.urgent) || LEVEL_RANK[a.level] - LEVEL_RANK[b.level])
+}
+
+/** One alert per risk type: repeated flags of the same code (e.g. several panic phrases) merge into one. */
 export function groupRiskFlags(flags: RiskFlag[]): RiskAlert[] {
-  const byEvidence = new Map<string, RiskAlert>()
+  const byCode = new Map<string, RiskAlert>()
   for (const flag of flags) {
     const { text, quoted } = normaliseEvidence(flag.evidence)
-    const existing = quoted
-      ? [...byEvidence.values()].find((alert) => alert.quoted && sameTrigger(alert.evidence, text))
-      : byEvidence.get(text)
+    const existing = byCode.get(flag.code)
     if (existing) {
-      existing.labels.push(riskLabel(flag.code))
+      addEvidence(existing, text)
       existing.urgent ||= flag.requires_immediate_escalation
       if (LEVEL_RANK[flag.level] < LEVEL_RANK[existing.level]) existing.level = flag.level
-      if (text.length > existing.evidence.length) existing.evidence = text // keep the fullest quote
       if (flag.requires_immediate_escalation) existing.action = flag.recommended_action
       continue
     }
-    byEvidence.set(text, {
+    byCode.set(flag.code, {
       level: flag.level,
       urgent: flag.requires_immediate_escalation,
-      labels: [riskLabel(flag.code)],
-      evidence: text,
+      label: riskLabel(flag.code),
+      evidence: [text],
       quoted,
       action: flag.requires_immediate_escalation ? flag.recommended_action : null,
     })
   }
-  return [...byEvidence.values()].sort((a, b) => Number(b.urgent) - Number(a.urgent) || LEVEL_RANK[a.level] - LEVEL_RANK[b.level])
+  return sortAlerts([...byCode.values()])
 }
 
-/** Fallback when only the summary text is available: dedupe "[R#] …" entries by their quoted trigger. */
+/** Fallback when only the summary text is available: "[R#] URGENT: HIGH - code: evidence" entries, one per code. */
 export function groupSummaryReviewAreas(summary: AssessmentSummaryOutput): RiskAlert[] {
-  const seen = new Map<string, RiskAlert>()
+  const byCode = new Map<string, RiskAlert>()
   for (const entry of summary.areas_requiring_professional_review) {
     const { text } = splitTag(entry)
     const urgent = /URGENT/i.test(text)
-    const cleaned = text.replace(/^URGENT:\s*/i, '').replace(/^(CRITICAL|HIGH|ELEVATED)\s*-\s*[a-z_0-9]+:\s*/i, '')
-    const { text: evidence, quoted } = normaliseEvidence(cleaned)
-    if ([...seen.keys()].some((known) => sameTrigger(known, evidence))) continue
-    seen.set(evidence, { level: urgent ? 'critical' : 'elevated', urgent, labels: [], evidence, quoted, action: null })
+    const body = text.replace(/^URGENT:\s*/i, '')
+    const match = /^(CRITICAL|HIGH|ELEVATED)\s*-\s*([a-z_0-9]+):\s*(.*)$/is.exec(body)
+    const level = (match?.[1].toLowerCase() as RiskLevel | undefined) ?? (urgent ? 'critical' : 'elevated')
+    const code = match?.[2] ?? body
+    const { text: evidence, quoted } = normaliseEvidence(match?.[3] ?? body)
+    const existing = byCode.get(code)
+    if (existing) {
+      addEvidence(existing, evidence)
+      existing.urgent ||= urgent
+      if (LEVEL_RANK[level] < LEVEL_RANK[existing.level]) existing.level = level
+      continue
+    }
+    byCode.set(code, { level, urgent, label: match ? riskLabel(code) : 'Flagged for review', evidence: [evidence], quoted, action: null })
   }
-  return [...seen.values()]
+  return sortAlerts([...byCode.values()])
 }
 
 export function highestLevel(levels: RiskLevel[]): RiskLevel {

@@ -1,0 +1,146 @@
+{
+  "source": "backend/app/services/assessment_audit.py",
+  "free_text_risk_patterns": [
+    {
+      "code": "self_harm_language",
+      "level": "critical",
+      "regex": "\\b(suicid\\w*|kill(ing)? myself|end(ing)? (my|it) (life|all)|take my (own )?life|self[- ]?harm\\w*|hurt(ing)? myself|cut(ting)? myself|better off dead|(don'?t|do not) want to (live|be alive|wake up)|no reason to live|overdos\\w*)\\b"
+    },
+    {
+      "code": "harm_to_others_language",
+      "level": "critical",
+      "regex": "\\b(hurt|harm|kill)(ing)? (someone|somebody|others|him|her|them)\\b"
+    },
+    {
+      "code": "hopelessness_language",
+      "level": "high",
+      "regex": "\\b(hopeless\\w*|no hope|worthless|can'?t go on|nothing will (ever )?(get|be) better|no point( in)? (anything|living|trying)|give up on (life|everything)|trapped)\\b"
+    },
+    {
+      "code": "panic_language",
+      "level": "elevated",
+      "regex": "\\b(panic attacks?|can'?t breathe|feel(ing)? like i'?m dying|heart (is )?racing)\\b"
+    }
+  ],
+  "structured_risk_rules": [
+    {
+      "code": "extreme_functional_impairment",
+      "level": "high"
+    },
+    {
+      "code": "extreme_stress",
+      "level": "elevated"
+    },
+    {
+      "code": "frequent_panic",
+      "level": "high"
+    },
+    {
+      "code": "functional_impairment",
+      "level": "elevated"
+    },
+    {
+      "code": "gad2_positive_screen",
+      "level": "elevated"
+    },
+    {
+      "code": "hypersomnia_indicator",
+      "level": "elevated"
+    },
+    {
+      "code": "low_wellbeing_index",
+      "level": "elevated"
+    },
+    {
+      "code": "moderate_hopelessness",
+      "level": "elevated"
+    },
+    {
+      "code": "phq2_positive_screen",
+      "level": "elevated"
+    },
+    {
+      "code": "self_harm_thoughts",
+      "level": "critical"
+    },
+    {
+      "code": "severe_hopelessness",
+      "level": "high"
+    },
+    {
+      "code": "severe_panic",
+      "level": "high"
+    },
+    {
+      "code": "severe_sleep_deprivation",
+      "level": "high"
+    }
+  ],
+  "contradiction_rules": [
+    {
+      "code": "low_stress_vs_acute_symptoms",
+      "domains": [
+        "stress",
+        "anxiety",
+        "sleep"
+      ],
+      "severity": "high"
+    },
+    {
+      "code": "positive_mood_vs_distress",
+      "domains": [
+        "mood",
+        "anxiety"
+      ],
+      "severity": "high"
+    },
+    {
+      "code": "no_sleep_issues_vs_symptoms",
+      "domains": [
+        "sleep"
+      ],
+      "severity": "medium"
+    },
+    {
+      "code": "good_quality_vs_short_sleep",
+      "domains": [
+        "sleep"
+      ],
+      "severity": "low"
+    },
+    {
+      "code": "no_anxiety_vs_panic",
+      "domains": [
+        "anxiety"
+      ],
+      "severity": "medium"
+    },
+    {
+      "code": "no_impact_vs_missed_days",
+      "domains": [
+        "functioning"
+      ],
+      "severity": "medium"
+    },
+    {
+      "code": "no_hopelessness_vs_narrative",
+      "domains": [
+        "mood",
+        "domain"
+      ],
+      "severity": "medium"
+    }
+  ],
+  "safety_question_rule": {
+    "rule": "A reply to the self-harm question that is not an explicit 'no' raises the critical self_harm_thoughts flag before the model runs; declining to answer raises nothing and the question stays listed as unanswered.",
+    "question_topic_regex": "\\b((hurt|harm|kill)(ing)? (yourself|themselves)|better off (dead|not (being )?(here|around|alive))|end(ing)? (your|their) (own )?life|suicid\\w*|self[- ]?harm\\w*)",
+    "explicit_no_regex": "^\\s*(no|nope|never|not at all|none|i (have )?never|i haven'?t|i have not|not once)\\b",
+    "contrast_words_regex": "\\b(but|although|though|except|sometimes|occasionally|maybe|yes|used to|once|before)\\b",
+    "declined_regex": "^\\s*(i'?d rather not (say|answer)|i would rather not|prefer not to (say|answer)|skip|pass)\\b"
+  },
+  "changed_answer_rule": "Any rating or choice later overwritten with a different value is listed as changed_<field>; the contradiction rules also run on the answers as first given.",
+  "actions": {
+    "escalate": "Pause screening, share crisis resources, and route to a clinician immediately.",
+    "review": "Highlight for clinician review in the summary."
+  }
+}

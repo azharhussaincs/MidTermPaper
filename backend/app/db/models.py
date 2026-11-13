@@ -44,6 +44,8 @@ class AssessmentRecord(Base):
     missing_fields: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     inconsistencies: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     risk_flags: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    # Stored answers later overwritten with a different value: {domain, field, previous, value}.
+    answer_revisions: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     clinical_summary: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     clinician_notes: Mapped[str | None] = mapped_column(Text)
     clinician_approved: Mapped[bool] = mapped_column(Boolean, default=False)

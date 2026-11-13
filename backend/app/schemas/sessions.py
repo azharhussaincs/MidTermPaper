@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from typing import Any, Literal
 
@@ -9,6 +10,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.assessment import AssessmentSummaryOutput, Inconsistency, RiskFlag
 from app.schemas.system import ProviderName
+
+#: Anonymous patient codes: letters, digits, '-' or '_', 3-32 characters (a digit is also required).
+ALIAS_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{2,31}")
+ALIAS_RULE = (
+    "Use an anonymous code with at least one number, such as anon-417 or blue-28, not your name. "
+    "Letters, numbers, '-' and '_' only, 3 to 32 characters."
+)
 
 AssessmentStatusName = Literal["in_progress", "awaiting_clinician_review", "reviewed", "interrupted"]
 RiskLevel = Literal["critical", "high", "elevated", "none"]
@@ -37,9 +45,23 @@ class StartAssessmentRequest(BaseModel):
         None,
         min_length=1,
         max_length=128,
-        description="Anonymised alias; generated if omitted. Never a real name.",
+        description="Anonymous code with at least one number (e.g. anon-417); generated if omitted. Never a real name.",
     )
     llm_provider: ProviderName | None = Field(None, description="Override the engine for this session.")
+
+    @field_validator("patient_alias")
+    @classmethod
+    def _anonymous_code(cls, value: str | None) -> str | None:
+        """Guard against real names: a code of 3-32 letters, digits, '-' or '_', with at least one digit.
+
+        A plain word ("Azhar") or a full name ("Sam Lee") is rejected, so a person cannot be
+        identified by the alias shown to clinicians and stored with their answers.
+        """
+        if value is None or value == "":
+            return None
+        if not ALIAS_PATTERN.fullmatch(value) or not any(c.isdigit() for c in value):
+            raise ValueError(ALIAS_RULE)
+        return value
 
 
 class SendMessageRequest(BaseModel):

@@ -11,12 +11,12 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+# Location-neutral first: we do not know where the person is. Country examples come last and are labelled.
 CRISIS_RESOURCES = (
-    "- If you are in immediate danger, call your local emergency number now (for example 911 in the US, "
-    "999 in the UK, 112 in the EU).\n"
-    "- US: call or text 988 (Suicide & Crisis Lifeline).\n"
-    "- UK & Ireland: call Samaritans on 116 123.\n"
-    "- Anywhere: find a free, confidential helpline at https://findahelpline.com."
+    "- If you are in immediate danger, call your local emergency number now.\n"
+    "- Find a free, confidential crisis line in your country at https://findahelpline.com.\n"
+    "- Examples: 988 in the US (call or text), Samaritans 116 123 in the UK and Ireland, "
+    "112 for emergencies across the EU."
 )
 
 # ---------------------------------------------------------------------------
@@ -72,22 +72,33 @@ mental health screening. You organise what they tell you for a qualified profess
 - As soon as the person answers, call `store_assessment_response` with ONLY the fields they
   actually answered, mapped to the guide's answer format (e.g. "several days" -> 1).
   Never invent or assume answers. If an answer is unclear, ask a gentle follow-up instead.
+- Store an answer only against the question you actually asked. A reply to an open question
+  (such as the greeting) is not an answer to a screening item: ask that item instead of guessing
+  which field it belongs to, and never ask a question whose answer you have already stored.
+- When you ask an open or clarifying question ("could you tell me more..."), a short option-style reply
+  ("more than half the days", "yes", a number) does not answer it. Do not store it as a description:
+  gently ask them to say it in their own words, or keep the earlier answers as they are.
+- People often answer ahead ("stress is 0, mood 9, no anxiety"). Store every answer they give
+  in its own domain straight away (one call per domain), even if you haven't reached it yet.
 - After finishing each domain, call `validate_and_audit_responses`. If it reports
   inconsistencies, gently ask about them (e.g. "Earlier you mentioned... could you tell me
-  a bit more?") and store the corrected answer.
+  a bit more?"). Store a corrected answer only if the person gives the new value themselves;
+  never replace a rating or choice they gave with one you inferred from other answers.
 - The session id is handled for you; never ask for it or mention it.
 - People can say "pause" or "continue later" at any time; their progress is saved.
 
 ## Current session
-- Person: {patient_alias}
+- The person is anonymous: never address them by a name or by their session code, even if one
+  appears in a tool result.
 - Completion: {completion_pct:.0f}% (pending domains: {pending_domains})
 - Still needed: {missing_fields}
 - Open inconsistencies to clarify: {inconsistencies}
 - Risk notes: {risk_summary}
 
-If this is the start of the conversation, greet them, explain in one or two sentences that
-this is a confidential screening (not a diagnosis) that a professional will review, and
-that they can skip any question. Then begin with mood.
+The opening greeting has ALREADY been sent (it is the first assistant message): it explained
+that this is a confidential screening, not a diagnosis, and asked how they have been feeling.
+Never greet again or repeat that introduction. Continue from the person's latest reply and
+begin with mood.
 """
 
 
@@ -97,7 +108,6 @@ def format_interviewer_prompt(state: dict[str, Any]) -> str:
     inconsistencies = state.get("inconsistencies") or []
     flags = state.get("risk_flags") or []
     return INTERVIEWER_SYSTEM_PROMPT.format(
-        patient_alias=state.get("patient_alias") or "anonymous",
         completion_pct=state.get("completion_pct", 0.0),
         pending_domains=", ".join(pending) or "none",
         missing_fields=", ".join(missing[:8]) + (" ..." if len(missing) > 8 else "") or "nothing",
@@ -216,8 +226,8 @@ If you feel you might act on these thoughts or are not safe, please reach out no
 You don't have to go through this alone."""
 
 GREETING_MESSAGE = (
-    "Hi, this is a confidential screening, not a diagnosis; you can skip any question or pause anytime. "
-    "How have you been feeling over the last couple of weeks?"
+    "Hi! This is a confidential screening, not a diagnosis, and you can skip or pause anytime. "
+    "How have you been feeling over the last two weeks?"
 )
 
 PAUSE_MESSAGE = (
@@ -225,8 +235,8 @@ PAUSE_MESSAGE = (
 )
 
 REVIEW_PENDING_MESSAGE = (
-    "Thank you, your answers are now with a clinician for review. "
-    "If you feel unsafe at any point, contact emergency services or a crisis line."
+    "Thanks, your answers are now with a clinician. "
+    "If you ever feel unsafe, contact emergency services or a crisis line."
 )
 
 SESSION_CLOSED_MESSAGE = (

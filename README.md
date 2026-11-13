@@ -70,8 +70,8 @@ Where things go:
 ```mermaid
 flowchart LR
     subgraph Frontend["React 19 + TypeScript + Tailwind (Vite)"]
-        PW[Patient Intake workspace]
-        CW[Clinician Review Portal]
+        PW[Patient check-in]
+        CW[Clinician review workspace]
         TB[LLM engine control]
     end
     subgraph Backend["FastAPI (Python 3.11)"]
@@ -145,6 +145,17 @@ flowchart TD
   `get_screening_questionnaire_guide`. `session_id` is an `InjectedToolArg`: the model never sees it,
   and the graph always supplies the thread's ID, so one session can't write to another.
 
+## User interface
+
+The React app follows the product's three stages: **Patient check-in → AI screening → Clinician review**.
+
+- **Home** explains what MindBridge is and offers the two entry points (start a check-in, open the review workspace).
+- **Patient check-in** is a guided conversation: six topics with a progress rail, one-tap answers, Pause and
+  "Send answers to clinician" (early submission). A safety disclosure shows fixed crisis contacts at once.
+- **Clinician review** has a queue (urgent first) and, per case, the overview, areas for professional review,
+  answers to double-check, answers by topic, missing information, the automatic summary quality check, and the
+  sign-off decision (approve, or request follow-up with notes) that resumes the paused LangGraph run.
+
 ## Repository layout
 
 ```
@@ -160,12 +171,12 @@ backend/
     api/          FastAPI routers and dependencies
     evaluation/   5 exam scenarios, scripted model, runner, Markdown report
   scripts/        run_exam_scenarios.py, setup_ollama.py
-  tests/          86 tests (pytest)
+  tests/          113 tests (pytest; 2 live-model tests are opt-in)
   logs/           exam_execution_report.md, exam_execution_trace.jsonl
 frontend/
   src/api/client.ts      typed API client
   src/types/api.ts       TypeScript mirrors of the Pydantic schemas
-  src/components/        TopBar, PatientWorkspace, ClinicianWorkspace, SummaryView, …
+  src/components/        Home, TopBar, PatientWorkspace (+ patient/), ClinicianWorkspace (+ clinician/), ui
 ```
 
 ## Setup
@@ -206,7 +217,7 @@ Set in `backend/.env`:
 
 On startup, with `auto` or `local`, the backend checks Ollama **in the background**. It looks for the
 binary and installs it if missing, starts `ollama serve`, pulls the model, and test-loads it. The API is
-available immediately; progress is shown at `GET /api/system/status` and in the UI's engine pill.
+available immediately; progress is shown at `GET /api/system/status` and in the AI assistant settings of the clinician workspace.
 The provider and model can be switched at runtime from the UI or with `POST /api/system/llm/configure`.
 
 Check the engine from the command line:
@@ -218,7 +229,7 @@ cd backend && .venv/bin/python -m app.core.llm_manager --provider gemini   # or 
 ## Running the app
 
 ```bash
-cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000     # API docs: http://localhost:8000/docs
+cd backend && .venv/bin/python -m uvicorn app.main:app --reload --port 8000     # API docs: http://localhost:8000/docs
 ```
 
 ```bash
@@ -228,7 +239,7 @@ cd frontend && npm run dev                                             # http://
 **Port already in use?** Run both on other ports and tell each about the other (no code changes):
 
 ```bash
-cd backend && CORS_ORIGINS=http://localhost:5174 .venv/bin/uvicorn app.main:app --reload --port 8010
+cd backend && CORS_ORIGINS=http://localhost:5174 .venv/bin/python -m uvicorn app.main:app --reload --port 8010
 ```
 
 ```bash
@@ -238,14 +249,14 @@ cd frontend && VITE_API_BASE_URL=http://localhost:8010 npm run dev -- --port 517
 ## Tests and the 5 exam scenarios
 
 ```bash
-cd backend && .venv/bin/python -m pytest -q          # 84 passed, 2 skipped (live LLM tests are opt-in)
+cd backend && .venv/bin/python -m pytest -q          # 113 passed, 2 skipped (live LLM tests are opt-in)
 ```
 
 | Test module | Covers |
 |---|---|
-| `test_tools.py` | 4 tools, audit engine (missing / conflicts / distress), crisis lexicon incl. denials |
+| `test_tools.py` | 4 tools, audit engine (missing / conflicts / distress / overwritten answers), crisis lexicon incl. denials |
 | `test_graph.py` | multi-turn memory across restarts, session-id injection, escalation, reflection loop, HITL interrupt, pause/resume |
-| `test_api.py` | every REST endpoint, error envelopes, CORS, queue priority, clinician review |
+| `test_api.py` | every REST endpoint, error envelopes, CORS, queue priority, clinician review; regressions for re-greeting, partial submission, pause/resume, safety-question answers and real-name aliases |
 | `test_exam_scenarios.py` | the 5 required scenarios end-to-end, JSONL trace, Markdown report, UI seeding |
 
 ### Exam scenario runner
@@ -261,6 +272,8 @@ Outputs:
   a step-by-step trace (nodes, tool calls with arguments and results, routing decisions, reflection
   verdicts, interrupts) and the **5 expected outputs**.
 - `backend/logs/exam_execution_trace.jsonl`: the same trace as one JSON event per line.
+- `backend/logs/exam_execution_report_live.md` / `exam_execution_trace_live.jsonl`: the same 5 scenarios
+  run with `--live` against a real model (see the report header for which one).
 
 | # | Scenario | What is verified | Final state |
 |---|---|---|---|
@@ -286,8 +299,13 @@ duplicating them. Resuming case 5 in the UI needs a working LLM.
 | Anxiety (GAD-2-style, physical/cognitive) | `AnxietyDomain`: GAD-2 items, panic attacks, physical and cognitive symptoms, avoidance |
 | Daily functioning | `FunctioningDomain`: work/study impact, social engagement, energy, self-care, days missed |
 | Personal concerns & goals | `ConcernsDomain`: narrative, challenges, support goals |
+| Tool: store assessment responses | `store_assessment_response`: validates one domain against its Pydantic schema, merges it into the SQLite record, returns per-domain progress |
+| Tool: retrieve previous records | `retrieve_assessment_record`: the current session plus earlier assessments for the same alias |
+| Tool: validate submitted responses | `store_assessment_response` rejects out-of-range or wrongly typed values with a field-level error; `validate_and_audit_responses` then audits the saved record as a whole |
+| Tool: identify missing / inconsistent information | `validate_and_audit_responses`: returns missing required fields, contradictions and risk flags (tagged `[M#]` / `[I#]` / `[R#]` in the summary) |
+| Conditional routing (incomplete / needs professional attention) | `route_after_load`, `route_after_interviewer`, `route_after_tools`, `route_after_reflection` → interviewer, `pause_session`, `escalation_summary` (urgent) or `generate_summary` |
 | Structured, empathetic questioning | `get_screening_questionnaire_guide` + interviewer prompt (1–2 questions at a time, trauma-informed) |
-| Missing / inconsistent information | `assessment_audit.missing_fields` and 7 contradiction rules → `[M#]` / `[I#]` |
+| Missing / inconsistent information | `assessment_audit.missing_fields` and 7 contradiction rules → `[M#]` / `[I#]`; a stored rating later overwritten is kept in `answer_revisions`, listed as a changed answer, and the rules also run on the first answers |
 | Flag severe distress for professional review | structured + free-text risk rules → `[R#]`; critical cases escalate immediately |
 | Summary of reported concerns | `AssessmentSummaryOutput.reported_concerns_summary` |
 | Completion status | `completion_status` + `domain_completion_map` (per-domain progress in the UI) |
@@ -299,7 +317,7 @@ duplicating them. Resuming case 5 in the UI needs a working LLM.
 | LangGraph agent with state | `StateGraph(AssessmentGraphState)`, 8 nodes, 4 conditional routers |
 | Tool use | 4 `@tool`s with Pydantic `args_schema`; injected `session_id` |
 | Memory / persistence | `SqliteSaver` checkpoints + SQLAlchemy `AssessmentRecord`; survives restarts (scenario 5) |
-| Reflection / self-correction | `reflect_summary`: rule checks (diagnostic language, every `[M#]`/`[I#]`/`[R#]` covered) + LLM reviewer; up to 2 regenerations |
+| Reflection / self-correction | `reflect_summary`: rule checks (diagnostic language, every `[M#]`/`[I#]`/`[R#]` covered) + LLM reviewer; at most 2 checks, so a failed summary is regenerated once |
 | Human-in-the-loop | `interrupt()` in `clinician_review_gate`, resumed with `Command(resume=…)` via `POST /api/clinician/{id}/review` |
 | Local + cloud LLM | Ollama auto-detect/install/pull/load + Gemini, `auto` fallback, runtime switching |
 | API + UI | FastAPI (10 endpoints, OpenAPI tags, JSON error envelopes) + React/TypeScript/Tailwind |
@@ -319,9 +337,9 @@ duplicating them. Resuming case 5 in the UI needs a working LLM.
 |---|---|
 | Never diagnose or prescribe | prompt boundaries + reflection blocks diagnostic and treatment language; the clinician sees any warning |
 | Mandatory disclaimer | `non_diagnostic_disclaimer` is always overwritten with the reviewed wording, even if the LLM or a clinician edits it |
-| Crisis safety | every user message is screened before the LLM; fixed crisis resources (988, Samaritans, emergency numbers, findahelpline.com) |
+| Crisis safety | every user message is screened before the LLM, and any reply to the self-harm question that is not an explicit "no" escalates; fixed crisis resources that lead with the local emergency number and findahelpline.com (country numbers only as labelled examples) |
 | Professional oversight | every summary waits for clinician sign-off; urgent cases are sorted to the top of the queue |
-| Privacy | anonymised aliases only (UI asks for "never a real name"); data stays in local SQLite; local LLM option |
+| Privacy | anonymous codes only: an alias must contain a number (e.g. `blue-28`), so names are rejected by the UI and the API; the alias is left out of the interviewer prompt and the model is told never to address the person by a name or code; data stays in local SQLite; local LLM option |
 
 ## API reference
 
@@ -351,4 +369,3 @@ Errors always have the shape `{"error": {"code", "message", "details"}}`.
 - **Scripted vs live:** the graded scenario run replaces only the LLM with a script, so it's
   reproducible. `--live` uses the same patient messages with the real model; results then depend on the model.
 - This is an academic prototype, not a medical device. It has not been clinically validated.
-# MidTermPaper

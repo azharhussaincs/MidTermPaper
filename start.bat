@@ -105,7 +105,7 @@ rem ---------------------------------------------------------------------------
 rem Launch (absolute paths, so stop.bat can recognise exactly these processes)
 rem ---------------------------------------------------------------------------
 echo ^> Starting backend on %BACKEND_URL%
-start "MindBridge-Backend" /D "%BACKEND%" cmd /k ""%VENV%\Scripts\uvicorn.exe" app.main:app --host 127.0.0.1 --port %BACKEND_PORT%"
+start "MindBridge-Backend" /D "%BACKEND%" cmd /k ""%VENV%\Scripts\python.exe" -m uvicorn app.main:app --host 127.0.0.1 --port %BACKEND_PORT%"
 
 echo ^> Starting frontend on %FRONTEND_URL%
 start "MindBridge-Frontend" /D "%FRONTEND%" cmd /k ""%FRONTEND%\node_modules\.bin\vite.cmd" --port %FRONTEND_PORT% --strictPort"

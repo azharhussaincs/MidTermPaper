@@ -150,7 +150,9 @@ trap cleanup_on_failure EXIT
 info "Starting backend on $BACKEND_URL"
 (
   cd "$BACKEND"
-  exec nohup "$VENV/bin/uvicorn" app.main:app --host 127.0.0.1 --port "$BACKEND_PORT" \
+  # `python -m` rather than .venv/bin/uvicorn: that script's shebang pins the folder's old path,
+  # so it breaks if the project is moved or renamed after the venv was created.
+  exec nohup "$VENV/bin/python" -m uvicorn app.main:app --host 127.0.0.1 --port "$BACKEND_PORT" \
     > "$RUN_DIR/backend.log" 2>&1 < /dev/null
 ) &
 echo $! > "$RUN_DIR/backend.pid"

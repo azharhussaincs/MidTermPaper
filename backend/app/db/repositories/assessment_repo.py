@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from sqlalchemy import func, select
@@ -44,15 +45,33 @@ def merge_domain(
 ) -> AssessmentDomainData:
     """Overlay `updates` (already validated, nulls removed) onto one domain; returns all data.
 
+    A rating or choice that replaces a different stored value is appended to
+    `answer_revisions`, so the audit can still see what the person first said.
     Raises pydantic.ValidationError if the merged domain is invalid.
     """
     raw = dict(record.domain_data or {})
-    raw[domain.value] = {**raw.get(domain.value, {}), **updates}
+    previous = raw.get(domain.value, {})
+    raw[domain.value] = {**previous, **updates}
     data = AssessmentDomainData.model_validate(raw)
     record.domain_data = data.model_dump(mode="json", exclude_none=True)
+    revisions = [
+        {"domain": domain.value, "field": field, "previous": previous[field], "value": value}
+        for field, value in updates.items()
+        if _is_answer_value(value) and previous.get(field) is not None and previous[field] != value
+    ]
+    if revisions:
+        record.answer_revisions = [*(record.answer_revisions or []), *revisions]
     if record.status == AssessmentStatus.INTERRUPTED:
         record.status = AssessmentStatus.IN_PROGRESS
     return data
+
+
+_CHOICE = re.compile(r"^[a-z_]+$")
+
+
+def _is_answer_value(value: Any) -> bool:
+    """Numbers, yes/no and enum choices; free text and lists are rephrased or extended, not revised."""
+    return isinstance(value, bool | int | float) or (isinstance(value, str) and bool(_CHOICE.match(value)))
 
 
 def save_audit(record: AssessmentRecord, report: AuditReport) -> None:

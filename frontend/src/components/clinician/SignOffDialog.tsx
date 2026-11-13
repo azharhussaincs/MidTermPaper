@@ -57,8 +57,8 @@ export function SignOffDialog(props: SignOffDialogProps) {
     <Modal
       open={open}
       onClose={onClose}
-      title={`Sign off intake · ${alias}`}
-      description="Your decision and notes are saved to the record and resume the paused assessment."
+      title={`Sign off check-in · ${alias}`}
+      description="Your decision and notes are saved to this check-in's record."
       widthClass="w-[min(34rem,calc(100vw-2rem))]"
     >
       <form onSubmit={onSubmit} className="space-y-4">
@@ -81,7 +81,7 @@ export function SignOffDialog(props: SignOffDialogProps) {
         </fieldset>
 
         <div className="space-y-1.5">
-          <label htmlFor={notesId} className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          <label htmlFor={notesId} className="text-xs font-semibold uppercase tracking-wider text-muted">
             Clinician notes <span className="text-rose-600">*</span>
           </label>
           <textarea
@@ -94,7 +94,7 @@ export function SignOffDialog(props: SignOffDialogProps) {
             rows={5}
             aria-describedby={notesErrorId}
             placeholder="Clinical observations, contact made, follow-up plan…"
-            className="peer w-full rounded-xl border border-line px-3 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-4 focus:ring-indigo-50 user-invalid:border-rose-400"
+            className="peer w-full rounded-xl border border-line px-3 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-4 focus:ring-teal-50 user-invalid:border-rose-400"
           />
           {/* Shown only after interaction (:user-invalid), never on first open. */}
           <p id={notesErrorId} className="hidden text-xs text-rose-700 peer-user-invalid:block">
@@ -103,8 +103,8 @@ export function SignOffDialog(props: SignOffDialogProps) {
         </div>
 
         {editedConcerns && (
-          <p className="rounded-xl bg-indigo-50 px-3 py-2 text-xs text-indigo-800">
-            Your edited summary will replace the AI draft. The non-diagnostic notice is kept automatically.
+          <p className="rounded-xl bg-teal-50 px-3 py-2 text-xs text-teal-800">
+            Your edited summary replaces the draft. The “not a diagnosis” notice is always kept.
           </p>
         )}
         {error && <ErrorNotice message={error} onDismiss={() => setError(null)} />}
@@ -136,16 +136,16 @@ function DecisionOption({ checked, onChange, icon, title, hint }: DecisionOption
     <label
       className={cn(
         'flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition-colors',
-        checked ? 'border-indigo-300 bg-indigo-50/50 ring-4 ring-indigo-50' : 'border-line hover:bg-slate-50',
+        checked ? 'border-teal-300 bg-teal-50/50 ring-4 ring-teal-50' : 'border-line hover:bg-slate-50',
       )}
     >
-      <input type="radio" name="decision" checked={checked} onChange={onChange} className="mt-0.5 accent-indigo-600" />
+      <input type="radio" name="decision" checked={checked} onChange={onChange} className="mt-0.5 accent-teal-600" />
       <span>
         <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
           {icon}
           {title}
         </span>
-        <span className="text-xs text-slate-500">{hint}</span>
+        <span className="text-xs text-muted">{hint}</span>
       </span>
     </label>
   )

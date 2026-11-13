@@ -1,0 +1,1467 @@
+{
+  "source": "backend/app/schemas/assessment.py",
+  "required_fields": {
+    "mood": [
+      "phq_little_interest",
+      "phq_feeling_down",
+      "overall_mood_rating",
+      "self_harm_thoughts"
+    ],
+    "stress": [
+      "perceived_stress_level",
+      "stress_triggers"
+    ],
+    "sleep": [
+      "average_sleep_hours",
+      "sleep_quality",
+      "reports_sleep_problems"
+    ],
+    "anxiety": [
+      "gad_nervous_anxious",
+      "gad_uncontrollable_worry",
+      "panic_attacks"
+    ],
+    "functioning": [
+      "work_study_impact",
+      "social_engagement",
+      "energy_level",
+      "self_care"
+    ],
+    "concerns": [
+      "narrative",
+      "support_goals"
+    ]
+  },
+  "domain_data_schema": {
+    "$defs": {
+      "AnxietyDomain": {
+        "additionalProperties": false,
+        "description": "GAD-2 style indicators plus physical / cognitive symptoms.",
+        "properties": {
+          "gad_nervous_anxious": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Feeling nervous, anxious or on edge over the last 2 weeks (0-3)",
+            "title": "Gad Nervous Anxious"
+          },
+          "gad_uncontrollable_worry": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Not being able to stop or control worrying over the last 2 weeks (0-3)",
+            "title": "Gad Uncontrollable Worry"
+          },
+          "panic_attacks": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "occasional",
+                  "frequent",
+                  "severe"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Panic Attacks"
+          },
+          "physical_symptoms": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Physical Symptoms"
+          },
+          "cognitive_symptoms": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cognitive Symptoms"
+          },
+          "avoidance_behaviours": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Avoidance Behaviours"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "title": "AnxietyDomain",
+        "type": "object"
+      },
+      "ConcernsDomain": {
+        "additionalProperties": false,
+        "description": "Open-ended narrative and what the person hopes to get from support.",
+        "properties": {
+          "narrative": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Narrative"
+          },
+          "main_challenges": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Main Challenges"
+          },
+          "support_goals": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Support Goals"
+          },
+          "currently_receiving_support": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Currently Receiving Support"
+          }
+        },
+        "title": "ConcernsDomain",
+        "type": "object"
+      },
+      "FunctioningDomain": {
+        "additionalProperties": false,
+        "description": "Daily activities: work/study, social engagement, energy and self-care.",
+        "properties": {
+          "work_study_impact": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "mild",
+                  "moderate",
+                  "severe"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Work Study Impact"
+          },
+          "social_engagement": {
+            "anyOf": [
+              {
+                "enum": [
+                  "normal",
+                  "reduced",
+                  "minimal",
+                  "isolated"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Social Engagement"
+          },
+          "energy_level": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Energy Level"
+          },
+          "self_care": {
+            "anyOf": [
+              {
+                "enum": [
+                  "maintained",
+                  "somewhat_neglected",
+                  "significantly_neglected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Self Care"
+          },
+          "days_missed_last_month": {
+            "anyOf": [
+              {
+                "maximum": 31,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Days Missed Last Month"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "title": "FunctioningDomain",
+        "type": "object"
+      },
+      "MoodDomain": {
+        "additionalProperties": false,
+        "description": "Mood & emotional wellbeing (PHQ-2 / WHO-5 style indicators).",
+        "properties": {
+          "phq_little_interest": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Little interest or pleasure in doing things over the last 2 weeks (0-3)",
+            "title": "Phq Little Interest"
+          },
+          "phq_feeling_down": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Feeling down, depressed or hopeless over the last 2 weeks (0-3)",
+            "title": "Phq Feeling Down"
+          },
+          "overall_mood_rating": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Self-rated mood, 1=very low, 10=very good",
+            "title": "Overall Mood Rating"
+          },
+          "hopelessness_level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "mild",
+                  "moderate",
+                  "severe"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Hopelessness Level"
+          },
+          "self_harm_thoughts": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Any thoughts of being better off dead or of hurting oneself",
+            "title": "Self Harm Thoughts"
+          },
+          "who5_items": {
+            "anyOf": [
+              {
+                "items": {
+                  "maximum": 5,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "maxItems": 5,
+                "minItems": 5,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "WHO-5 wellbeing items, each 0-5",
+            "title": "Who5 Items"
+          },
+          "mood_description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mood Description"
+          }
+        },
+        "title": "MoodDomain",
+        "type": "object"
+      },
+      "SleepDomain": {
+        "additionalProperties": false,
+        "description": "Sleep duration, quality and insomnia/hypersomnia indicators.",
+        "properties": {
+          "average_sleep_hours": {
+            "anyOf": [
+              {
+                "maximum": 24,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Average Sleep Hours"
+          },
+          "sleep_quality": {
+            "anyOf": [
+              {
+                "enum": [
+                  "very_poor",
+                  "poor",
+                  "fair",
+                  "good",
+                  "very_good"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sleep Quality"
+          },
+          "reports_sleep_problems": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The user's own view: do they have sleep problems?",
+            "title": "Reports Sleep Problems"
+          },
+          "difficulty_falling_asleep": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Difficulty Falling Asleep"
+          },
+          "frequent_night_waking": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Frequent Night Waking"
+          },
+          "early_morning_waking": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Early Morning Waking"
+          },
+          "wakes_unrefreshed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Wakes Unrefreshed"
+          },
+          "excessive_daytime_sleepiness": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Excessive Daytime Sleepiness"
+          },
+          "sleeping_more_than_usual": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sleeping More Than Usual"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "title": "SleepDomain",
+        "type": "object"
+      },
+      "StressDomain": {
+        "additionalProperties": false,
+        "description": "Perceived stress (0-10 accepted so \"0/10\" answers are representable) and triggers.",
+        "properties": {
+          "perceived_stress_level": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Perceived Stress Level"
+          },
+          "stress_triggers": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stress Triggers"
+          },
+          "stress_duration": {
+            "anyOf": [
+              {
+                "enum": [
+                  "days",
+                  "weeks",
+                  "months",
+                  "years"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stress Duration"
+          },
+          "feels_overwhelmed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Feels Overwhelmed"
+          },
+          "coping_strategies": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Coping Strategies"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "title": "StressDomain",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "All six domains as stored in `AssessmentRecord.domain_data`.",
+    "properties": {
+      "mood": {
+        "$ref": "#/$defs/MoodDomain"
+      },
+      "stress": {
+        "$ref": "#/$defs/StressDomain"
+      },
+      "sleep": {
+        "$ref": "#/$defs/SleepDomain"
+      },
+      "anxiety": {
+        "$ref": "#/$defs/AnxietyDomain"
+      },
+      "functioning": {
+        "$ref": "#/$defs/FunctioningDomain"
+      },
+      "concerns": {
+        "$ref": "#/$defs/ConcernsDomain"
+      }
+    },
+    "title": "AssessmentDomainData",
+    "type": "object"
+  },
+  "summary_output_schema": {
+    "$defs": {
+      "AnxietyDomain": {
+        "additionalProperties": false,
+        "description": "GAD-2 style indicators plus physical / cognitive symptoms.",
+        "properties": {
+          "gad_nervous_anxious": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Feeling nervous, anxious or on edge over the last 2 weeks (0-3)",
+            "title": "Gad Nervous Anxious"
+          },
+          "gad_uncontrollable_worry": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Not being able to stop or control worrying over the last 2 weeks (0-3)",
+            "title": "Gad Uncontrollable Worry"
+          },
+          "panic_attacks": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "occasional",
+                  "frequent",
+                  "severe"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Panic Attacks"
+          },
+          "physical_symptoms": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Physical Symptoms"
+          },
+          "cognitive_symptoms": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cognitive Symptoms"
+          },
+          "avoidance_behaviours": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Avoidance Behaviours"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "title": "AnxietyDomain",
+        "type": "object"
+      },
+      "AssessmentDomain": {
+        "enum": [
+          "mood",
+          "stress",
+          "sleep",
+          "anxiety",
+          "functioning",
+          "concerns"
+        ],
+        "title": "AssessmentDomain",
+        "type": "string"
+      },
+      "AssessmentDomainData": {
+        "additionalProperties": false,
+        "description": "All six domains as stored in `AssessmentRecord.domain_data`.",
+        "properties": {
+          "mood": {
+            "$ref": "#/$defs/MoodDomain"
+          },
+          "stress": {
+            "$ref": "#/$defs/StressDomain"
+          },
+          "sleep": {
+            "$ref": "#/$defs/SleepDomain"
+          },
+          "anxiety": {
+            "$ref": "#/$defs/AnxietyDomain"
+          },
+          "functioning": {
+            "$ref": "#/$defs/FunctioningDomain"
+          },
+          "concerns": {
+            "$ref": "#/$defs/ConcernsDomain"
+          }
+        },
+        "title": "AssessmentDomainData",
+        "type": "object"
+      },
+      "CompletionStatus": {
+        "properties": {
+          "percentage": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Percentage",
+            "type": "number"
+          },
+          "completed_domains": {
+            "items": {
+              "$ref": "#/$defs/AssessmentDomain"
+            },
+            "title": "Completed Domains",
+            "type": "array"
+          },
+          "pending_domains": {
+            "items": {
+              "$ref": "#/$defs/AssessmentDomain"
+            },
+            "title": "Pending Domains",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "awaiting_clinician_review",
+              "reviewed",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "percentage",
+          "completed_domains",
+          "pending_domains",
+          "status"
+        ],
+        "title": "CompletionStatus",
+        "type": "object"
+      },
+      "ConcernsDomain": {
+        "additionalProperties": false,
+        "description": "Open-ended narrative and what the person hopes to get from support.",
+        "properties": {
+          "narrative": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Narrative"
+          },
+          "main_challenges": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Main Challenges"
+          },
+          "support_goals": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Support Goals"
+          },
+          "currently_receiving_support": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Currently Receiving Support"
+          }
+        },
+        "title": "ConcernsDomain",
+        "type": "object"
+      },
+      "FunctioningDomain": {
+        "additionalProperties": false,
+        "description": "Daily activities: work/study, social engagement, energy and self-care.",
+        "properties": {
+          "work_study_impact": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "mild",
+                  "moderate",
+                  "severe"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Work Study Impact"
+          },
+          "social_engagement": {
+            "anyOf": [
+              {
+                "enum": [
+                  "normal",
+                  "reduced",
+                  "minimal",
+                  "isolated"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Social Engagement"
+          },
+          "energy_level": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Energy Level"
+          },
+          "self_care": {
+            "anyOf": [
+              {
+                "enum": [
+                  "maintained",
+                  "somewhat_neglected",
+                  "significantly_neglected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Self Care"
+          },
+          "days_missed_last_month": {
+            "anyOf": [
+              {
+                "maximum": 31,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Days Missed Last Month"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "title": "FunctioningDomain",
+        "type": "object"
+      },
+      "MoodDomain": {
+        "additionalProperties": false,
+        "description": "Mood & emotional wellbeing (PHQ-2 / WHO-5 style indicators).",
+        "properties": {
+          "phq_little_interest": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Little interest or pleasure in doing things over the last 2 weeks (0-3)",
+            "title": "Phq Little Interest"
+          },
+          "phq_feeling_down": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Feeling down, depressed or hopeless over the last 2 weeks (0-3)",
+            "title": "Phq Feeling Down"
+          },
+          "overall_mood_rating": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Self-rated mood, 1=very low, 10=very good",
+            "title": "Overall Mood Rating"
+          },
+          "hopelessness_level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "mild",
+                  "moderate",
+                  "severe"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Hopelessness Level"
+          },
+          "self_harm_thoughts": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Any thoughts of being better off dead or of hurting oneself",
+            "title": "Self Harm Thoughts"
+          },
+          "who5_items": {
+            "anyOf": [
+              {
+                "items": {
+                  "maximum": 5,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "maxItems": 5,
+                "minItems": 5,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "WHO-5 wellbeing items, each 0-5",
+            "title": "Who5 Items"
+          },
+          "mood_description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mood Description"
+          }
+        },
+        "title": "MoodDomain",
+        "type": "object"
+      },
+      "SleepDomain": {
+        "additionalProperties": false,
+        "description": "Sleep duration, quality and insomnia/hypersomnia indicators.",
+        "properties": {
+          "average_sleep_hours": {
+            "anyOf": [
+              {
+                "maximum": 24,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Average Sleep Hours"
+          },
+          "sleep_quality": {
+            "anyOf": [
+              {
+                "enum": [
+                  "very_poor",
+                  "poor",
+                  "fair",
+                  "good",
+                  "very_good"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sleep Quality"
+          },
+          "reports_sleep_problems": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The user's own view: do they have sleep problems?",
+            "title": "Reports Sleep Problems"
+          },
+          "difficulty_falling_asleep": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Difficulty Falling Asleep"
+          },
+          "frequent_night_waking": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Frequent Night Waking"
+          },
+          "early_morning_waking": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Early Morning Waking"
+          },
+          "wakes_unrefreshed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Wakes Unrefreshed"
+          },
+          "excessive_daytime_sleepiness": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Excessive Daytime Sleepiness"
+          },
+          "sleeping_more_than_usual": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sleeping More Than Usual"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "title": "SleepDomain",
+        "type": "object"
+      },
+      "StressDomain": {
+        "additionalProperties": false,
+        "description": "Perceived stress (0-10 accepted so \"0/10\" answers are representable) and triggers.",
+        "properties": {
+          "perceived_stress_level": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Perceived Stress Level"
+          },
+          "stress_triggers": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stress Triggers"
+          },
+          "stress_duration": {
+            "anyOf": [
+              {
+                "enum": [
+                  "days",
+                  "weeks",
+                  "months",
+                  "years"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stress Duration"
+          },
+          "feels_overwhelmed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Feels Overwhelmed"
+          },
+          "coping_strategies": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Coping Strategies"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "title": "StressDomain",
+        "type": "object"
+      }
+    },
+    "description": "Structured hand-off for a clinician. Organises self-reports; never diagnoses.",
+    "properties": {
+      "structured_assessment": {
+        "$ref": "#/$defs/AssessmentDomainData"
+      },
+      "reported_concerns_summary": {
+        "description": "Neutral summary of what the person reported, in their terms. No diagnoses.",
+        "title": "Reported Concerns Summary",
+        "type": "string"
+      },
+      "missing_or_inconsistent_info": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Missing Or Inconsistent Info",
+        "type": "array"
+      },
+      "areas_requiring_professional_review": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Areas Requiring Professional Review",
+        "type": "array"
+      },
+      "completion_status": {
+        "$ref": "#/$defs/CompletionStatus"
+      },
+      "non_diagnostic_disclaimer": {
+        "default": "This is an initial screening summary of self-reported information. It is not a diagnosis and does not recommend any treatment or medication. A qualified mental health professional must review it. If you are in immediate danger or thinking about harming yourself, contact local emergency services or a crisis line right away.",
+        "title": "Non Diagnostic Disclaimer",
+        "type": "string"
+      }
+    },
+    "required": [
+      "structured_assessment",
+      "reported_concerns_summary",
+      "missing_or_inconsistent_info",
+      "areas_requiring_professional_review",
+      "completion_status"
+    ],
+    "title": "AssessmentSummaryOutput",
+    "type": "object"
+  }
+}

@@ -1,0 +1,260 @@
+@import "tailwindcss";
+
+/* --------------------------------------------------------------------------
+   Design tokens: one calm brand hue (deep teal) on warm neutrals.
+   Semantic colours (emerald / amber / orange / rose) are reserved for status and risk.
+   -------------------------------------------------------------------------- */
+@theme {
+  --color-canvas: #f6f5f2;
+  --color-card: #ffffff;
+  --color-line: #e6e3dd;
+  --color-ink: #1b2422;
+  --color-muted: #66625b;
+  /* Warm neutral scale: every slate-* utility in the app reads as paper, not steel. */
+  --color-slate-50: #f9f8f6;
+  --color-slate-100: #f1efeb;
+  --color-slate-200: #e4e1dc;
+  --color-slate-300: #cfcbc4;
+  --color-slate-400: #a29d95;
+  --color-slate-500: #78736b;
+  --color-slate-600: #5a564f;
+  --color-slate-700: #45423c;
+  --color-slate-800: #2d2b27;
+  --color-slate-900: #1d1c19;
+  --color-brand: #0f766e;
+  --color-brand-strong: #115e59;
+  --color-brand-soft: #e8f5f3;
+  /* Former indigo accent: folded into the brand so every screen shares one hue. */
+  --color-accent: #115e59;
+  --radius-card: 1rem;
+  --shadow-card: 0 1px 2px rgb(15 28 36 / 0.04), 0 1px 1px rgb(15 28 36 / 0.03);
+  --shadow-raised: 0 4px 12px -2px rgb(15 28 36 / 0.08), 0 1px 3px rgb(15 28 36 / 0.05);
+  --shadow-float: 0 16px 40px -12px rgb(15 28 36 / 0.22), 0 2px 6px rgb(15 28 36 / 0.06);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Display serif for page titles and the assistant's questions: calm, human, not "dashboard". */
+  --font-display: "Source Serif 4 Variable", ui-serif, Georgia, "Times New Roman", serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-canvas text-ink antialiased;
+  font-feature-settings: "cv11", "ss01", "ss03";
+  letter-spacing: -0.003em;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-brand-soft);
+}
+
+/* Loading placeholders: a quiet pulse, static under reduced motion. */
+@keyframes skeleton-pulse {
+  50% { opacity: 0.55; }
+}
+.skeleton {
+  border-radius: 0.5rem;
+  background: var(--color-slate-200);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Linear <progress> (fully custom: WebKit and Firefox rules must stay separate)
+   -------------------------------------------------------------------------- */
+progress.meter {
+  --progress-bar-radius: 1e5px;
+  --progress-bar-track: var(--color-slate-100);
+  --progress-bar-fill: var(--color-brand);
+  appearance: none;
+  border: 0 solid;
+  overflow: clip;
+  inline-size: 100%;
+  block-size: 0.375rem;
+  border-radius: var(--progress-bar-radius);
+  background: var(--progress-bar-track);
+}
+progress.meter.complete {
+  --progress-bar-fill: var(--color-emerald-500);
+}
+progress.meter.warn {
+  --progress-bar-fill: var(--color-amber-500);
+}
+progress.meter.danger {
+  --progress-bar-fill: var(--color-rose-500);
+}
+progress.meter::-webkit-progress-bar {
+  background: transparent;
+}
+progress.meter::-webkit-progress-value {
+  background: var(--progress-bar-fill);
+  border-radius: var(--progress-bar-radius);
+}
+progress.meter::-moz-progress-bar {
+  background: var(--progress-bar-fill);
+  border-radius: var(--progress-bar-radius);
+}
+@media (prefers-reduced-motion: no-preference) {
+  progress.meter::-webkit-progress-value {
+    transition: inline-size 0.4s;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Progress ring: native <progress> drawn with a conic gradient.
+   --value is set inline from React (no attr() dependency).
+   -------------------------------------------------------------------------- */
+@property --value {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+progress.progress-ring::-webkit-progress-bar {
+  display: none;
+  background: none;
+}
+progress.progress-ring::-webkit-progress-value {
+  display: none;
+  background: none;
+}
+progress.progress-ring::-moz-progress-bar {
+  display: none;
+  background: none;
+}
+progress.progress-ring {
+  --size: 2.75rem;
+  --thickness: 4px;
+  --track-color: var(--color-slate-200);
+  --fill-color: var(--color-brand);
+  appearance: none;
+  inline-size: var(--size);
+  block-size: var(--size);
+  border-radius: 50%;
+  background: conic-gradient(var(--fill-color) calc(var(--value) * 1%), var(--track-color) 0);
+  background-clip: border-area;
+  background-origin: border-box;
+  border: var(--thickness) solid transparent;
+  transition: --value 0s;
+  @media (prefers-reduced-motion: no-preference) {
+    transition-duration: 0.5s;
+  }
+  @media (forced-colors: active) {
+    forced-color-adjust: none;
+    --fill-color: CanvasText;
+    --track-color: Canvas;
+  }
+}
+progress.progress-ring.complete {
+  --fill-color: var(--color-emerald-500);
+}
+@supports not (background-clip: border-area) {
+  progress.progress-ring {
+    mask-image: radial-gradient(
+      transparent calc(50% - var(--thickness)),
+      black calc(50% - var(--thickness) + 0.5px)
+    );
+    border: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Dialogs
+   -------------------------------------------------------------------------- */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+/* Only true modals dim the page; the popover settings panel leaves it usable. */
+dialog:modal::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgb(15 23 42 / 0.4);
+  backdrop-filter: blur(2px);
+}
+
+/* Session drawer: modal <dialog> + scroll-snap swipe track (sheet | spacer). */
+.drawer {
+  --drawer-width: min(24rem, 85dvw, 100dvw - 24px);
+  --drawer-backdrop: 0;
+  inset: 0;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  overflow: visible;
+}
+.drawer:modal::backdrop {
+  background: rgb(15 23 42);
+  backdrop-filter: none;
+  opacity: calc(var(--drawer-backdrop) * 0.45);
+}
+.drawer-scroller {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--drawer-width) 100%;
+  overflow-x: scroll;
+  overscroll-behavior: none;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .drawer-scroller {
+    scroll-behavior: smooth;
+  }
+}
+.drawer-scroller::after {
+  content: "";
+  scroll-snap-align: end;
+  scroll-initial-target: nearest;
+}
+.drawer-sheet {
+  height: 100svh;
+  overflow-y: auto;
+  scroll-snap-align: start;
+}
+@supports (animation-timeline: scroll()) {
+  @property --drawer-backdrop {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 0;
+  }
+  .drawer {
+    timeline-scope: --drawer-fade;
+    animation: fade-drawer-backdrop linear both;
+    animation-timeline: --drawer-fade;
+  }
+  .drawer-scroller {
+    scroll-timeline: --drawer-fade x;
+  }
+  @keyframes fade-drawer-backdrop {
+    0% {
+      --drawer-backdrop: 1;
+    }
+    100% {
+      --drawer-backdrop: 0;
+    }
+  }
+}
+
+/* Typing indicator: slows down instead of stopping under reduced motion. */
+@keyframes typing-dot {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
+}
+.typing-dot {
+  animation: typing-dot 1.2s infinite ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .typing-dot {
+    animation-duration: 4s;
+  }
+}

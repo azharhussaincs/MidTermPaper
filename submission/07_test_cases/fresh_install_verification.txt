@@ -1,0 +1,22 @@
+Fresh-install verification of submission/01_source_code/MindBridge
+Date: 2026-11-13 11:09 UTC · Python 3.11.18 · Node v24.18.0 · npm 11.16.0
+
+Commands run on a clean copy in an empty directory (new virtualenv, no node_modules, no .env):
+  python3.11 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
+  .venv/bin/python -m pytest -q
+  .venv/bin/python -m scripts.run_exam_scenarios
+  npm ci && npm run build
+
+Output:
+== pip install OK
+113 passed, 2 skipped in 26.61s
+  PASS  Scenario 1: Complete assessment                          reviewed                   100.0%  checks 8/8
+  PASS  Scenario 2: Assessment with missing responses            awaiting_clinician_review   50.0%  checks 5/5
+  PASS  Scenario 3: Conflicting / inconsistent responses         awaiting_clinician_review  100.0%  checks 5/5
+  PASS  Scenario 4: Responses indicating significant distress    awaiting_clinician_review   16.7%  checks 7/7
+  PASS  Scenario 5: Incomplete or interrupted assessment         in_progress                 50.0%  checks 7/7
+  PASS  Urgent escalation (scenario 4) is first in the clinician queue
+  PASS  Every scenario produced all 5 expected outputs
+added 47 packages, and audited 54 packages in 1s
+✓ built in 568ms
+== FRESH INSTALL DONE

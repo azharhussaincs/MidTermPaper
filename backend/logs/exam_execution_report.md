@@ -1,6 +1,6 @@
 # MindBridge Intake AI — Exam Scenario Execution Report
 
-Generated 2026-11-12 18:31 UTC · mode **scripted** · LLM: deterministic script (offline) · **34/34 checks passed** ✅
+Generated 2026-11-13 13:16 UTC · mode **scripted** · LLM: deterministic script (offline) · **34/34 checks passed** ✅
 
 Each scenario runs end-to-end through the real LangGraph `StateGraph` (SQLite assessment store, SqliteSaver checkpoints, the 4 assessment tools, deterministic audit engine, reflection loop and clinician `interrupt()`).
 In scripted mode only the language model is replaced by a deterministic script, so results are reproducible offline. Use `--live` to run the same patient messages against Gemini or Ollama.
@@ -50,7 +50,7 @@ Clinician queue order (urgent first): `exam-s4-distress` → `exam-s3-conflictin
 
 ### Conversation
 
-**Agent:** Hello, and thank you for being here. I'm an intake assistant, and I'll ask you some questions about your mood, stress, sleep, worries, day-to-day life and anything else on your mind. This is a confidential screening, not a diagnosis: a qualified professional will review your answers. You can skip any question, and say "pause" at any time to continue later.  To start, how have you been feeling in yourself over the last couple of weeks?  
+**Agent:** Hi! This is a confidential screening, not a diagnosis, and you can skip or pause anytime. How have you been feeling over the last two weeks?  
 **Patient:** Over the last couple of weeks I've had less interest in things on several days, and felt a bit down on several days too. I'd rate my mood about 6 out of 10. No, I haven't had any thoughts of hurting myself.  
 **Agent:** Thank you for sharing that. On a scale from 0 to 10, how stressed have you felt lately, and what's been causing it?  
 **Patient:** Stress is around 6 out of 10, mostly from work deadlines and some money worries. It's been going on for a few weeks.  
@@ -63,17 +63,17 @@ Clinician queue order (urgent first): `exam-s4-distress` → `exam-s3-conflictin
 **Agent:** Is there anything else you'd like to share, and what would you hope to get from support?  
 **Patient:** Mainly I want to handle work pressure better and sleep a bit more. Some practical strategies for managing stress would really help.  
 **Agent:** Thank you, that's everything I needed. I'll prepare a summary for a qualified professional to review.  
-**Agent:** Thank you for taking the time to answer these questions. Your responses have been organised into a summary that a qualified professional will review. This screening is not a diagnosis. If things get worse or you feel unsafe at any point, please contact local emergency services or a crisis line.  
+**Agent:** Thanks, your answers are now with a clinician. If you ever feel unsafe, contact emergency services or a crisis line.  
 
 ### Execution trace (nodes, tool calls, routing, reflection)
 
-**Run 1 · `start`** (`cc1f433585fc`): END
+**Run 1 · `start`** (`20a8b61a0e1d`): END
 
 | # | Node / decision | What happened |
 |---|---|---|
 | 0 | note | update_state(as_node=interviewer): seeded fixed greeting (no LLM call) |
 
-**Run 2 · `turn`** (`d050362b9045`): load_context → interviewer → tools → interviewer → END
+**Run 2 · `turn`** (`061585687172`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -86,7 +86,7 @@ Clinician queue order (urgent first): `exam-s4-distress` → `exam-s3-conflictin
 | 6 | `interviewer` | says “Thank you for sharing that. On a scale from 0 to 10, how stressed have you felt lately, and what's been causin” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 3 · `turn`** (`e3d7a6bcdd35`): load_context → interviewer → tools → interviewer → END
+**Run 3 · `turn`** (`2d6efa69a500`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -99,7 +99,7 @@ Clinician queue order (urgent first): `exam-s4-distress` → `exam-s3-conflictin
 | 6 | `interviewer` | says “That sounds like a lot to carry. How has your sleep been?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 4 · `turn`** (`cefb7e690e1b`): load_context → interviewer → tools → interviewer → END
+**Run 4 · `turn`** (`4d1bd084e1a4`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -112,7 +112,7 @@ Clinician queue order (urgent first): `exam-s4-distress` → `exam-s3-conflictin
 | 6 | `interviewer` | says “Thanks. Over the last two weeks, how often have you felt nervous or on edge, or been unable to stop worrying?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 5 · `turn`** (`b35c177eca4d`): load_context → interviewer → tools → interviewer → END
+**Run 5 · `turn`** (`facdc4f06040`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -125,7 +125,7 @@ Clinician queue order (urgent first): `exam-s4-distress` → `exam-s3-conflictin
 | 6 | `interviewer` | says “How have these feelings affected your day-to-day life: work, social life, energy and looking after yourself?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 6 · `turn`** (`0064b7820361`): load_context → interviewer → tools → interviewer → END
+**Run 6 · `turn`** (`ee6409564317`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -138,7 +138,7 @@ Clinician queue order (urgent first): `exam-s4-distress` → `exam-s3-conflictin
 | 6 | `interviewer` | says “Is there anything else you'd like to share, and what would you hope to get from support?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 7 · `turn`** (`83be31fcc634`): load_context → interviewer → tools → interviewer → generate_summary → reflect_summary → INTERRUPT(clinician_review)
+**Run 7 · `turn`** (`9589969e2e0b`): load_context → interviewer → tools → interviewer → generate_summary → reflect_summary → INTERRUPT(clinician_review)
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -152,11 +152,11 @@ Clinician queue order (urgent first): `exam-s4-distress` → `exam-s3-conflictin
 | 7 | ↳ `route_after_interviewer` | → `generate_summary` |
 | 8 | `generate_summary` | draft summary generated |
 | 9 | ↳ `edge` | → `reflect_summary` |
-| 10 | `reflect_summary` | says “Thank you for taking the time to answer these questions. Your responses have been organised into a summary tha”; reflection_passed=True; reflection_attempts=1 |
+| 10 | `reflect_summary` | says “Thanks, your answers are now with a clinician. If you ever feel unsafe, contact emergency services or a crisis”; reflection_passed=True; reflection_attempts=1 |
 | 11 | ↳ `route_after_reflection` | → `clinician_review_gate` |
 | 12 | ⏸ `interrupt()` | clinician review gate (urgent=False) |
 
-**Run 8 · `clinician_resume`** (`8d67fdaa10db`): clinician_review_gate → END
+**Run 8 · `clinician_resume`** (`57e5ea1afe78`): clinician_review_gate → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -219,24 +219,24 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 
 ### Conversation
 
-**Agent:** Hello, and thank you for being here. I'm an intake assistant, and I'll ask you some questions about your mood, stress, sleep, worries, day-to-day life and anything else on your mind. This is a confidential screening, not a diagnosis: a qualified professional will review your answers. You can skip any question, and say "pause" at any time to continue later.  To start, how have you been feeling in yourself over the last couple of weeks?  
+**Agent:** Hi! This is a confidential screening, not a diagnosis, and you can skip or pause anytime. How have you been feeling over the last two weeks?  
 **Patient:** My mood is about 5 out of 10. I've had less interest in things on several days and felt down on several days. No thoughts of harming myself.  
 **Agent:** Thank you. How would you rate your stress from 0 to 10, and what's behind it?  
 **Patient:** Stress is about 7 out of 10, mostly from exams and coursework.  
 **Agent:** That's a lot of pressure. How has your sleep been?  
 **Patient:** Around 5 hours a night, poor quality. I keep waking up too early and can't get back to sleep.  
 **Agent:** Thanks for telling me. Next I'd like to ask about worry and feeling on edge.  
-**Agent:** Thank you for taking the time to answer these questions. Your responses have been organised into a summary that a qualified professional will review. This screening is not a diagnosis. If things get worse or you feel unsafe at any point, please contact local emergency services or a crisis line.  
+**Agent:** Thanks, your answers are now with a clinician. If you ever feel unsafe, contact emergency services or a crisis line.  
 
 ### Execution trace (nodes, tool calls, routing, reflection)
 
-**Run 1 · `start`** (`c657567a9759`): END
+**Run 1 · `start`** (`f6d8ec4b61a6`): END
 
 | # | Node / decision | What happened |
 |---|---|---|
 | 0 | note | update_state(as_node=interviewer): seeded fixed greeting (no LLM call) |
 
-**Run 2 · `turn`** (`7363118f8f3e`): load_context → interviewer → tools → interviewer → END
+**Run 2 · `turn`** (`2d09f8d26252`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -249,7 +249,7 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | 6 | `interviewer` | says “Thank you. How would you rate your stress from 0 to 10, and what's behind it?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 3 · `turn`** (`c9c694209cb8`): load_context → interviewer → tools → interviewer → END
+**Run 3 · `turn`** (`1416dfd39595`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -262,7 +262,7 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | 6 | `interviewer` | says “That's a lot of pressure. How has your sleep been?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 4 · `turn`** (`ac8ffe90ca59`): load_context → interviewer → tools → interviewer → END
+**Run 4 · `turn`** (`a9909c53f51c`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -275,14 +275,14 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | 6 | `interviewer` | says “Thanks for telling me. Next I'd like to ask about worry and feeling on edge.” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 5 · `finalize_early`** (`9d0be52cf8ad`): generate_summary → reflect_summary → INTERRUPT(clinician_review)
+**Run 5 · `finalize_early`** (`8016079f7f4a`): generate_summary → reflect_summary → INTERRUPT(clinician_review)
 
 | # | Node / decision | What happened |
 |---|---|---|
 | 0 | note | update_state(as_node=interviewer, finalize_requested=True); missing=9 |
 | 1 | `generate_summary` | draft summary generated |
 | 2 | ↳ `edge` | → `reflect_summary` |
-| 3 | `reflect_summary` | says “Thank you for taking the time to answer these questions. Your responses have been organised into a summary tha”; reflection_passed=True; reflection_attempts=1 |
+| 3 | `reflect_summary` | says “Thanks, your answers are now with a clinician. If you ever feel unsafe, contact emergency services or a crisis”; reflection_passed=True; reflection_attempts=1 |
 | 4 | ↳ `route_after_reflection` | → `clinician_review_gate` |
 | 5 | ⏸ `interrupt()` | clinician review gate (urgent=False) |
 
@@ -349,24 +349,26 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 
 ### Conversation
 
-**Agent:** Hello, and thank you for being here. I'm an intake assistant, and I'll ask you some questions about your mood, stress, sleep, worries, day-to-day life and anything else on your mind. This is a confidential screening, not a diagnosis: a qualified professional will review your answers. You can skip any question, and say "pause" at any time to continue later.  To start, how have you been feeling in yourself over the last couple of weeks?  
+**Agent:** Hi! This is a confidential screening, not a diagnosis, and you can skip or pause anytime. How have you been feeling over the last two weeks?  
 **Patient:** Honestly I'm completely fine. Stress is 0 out of 10, my mood is 9 out of 10, and I have zero anxiety: I never feel nervous or worried. No thoughts of hurting myself.  
 **Agent:** Thanks for letting me know. How has your sleep been, and how are things day to day?  
 **Patient:** Well, actually I get really bad panic attacks most days and I'm only sleeping about 2 hours a night. I haven't been able to work at all this month and I barely see anyone.  
 **Agent:** Thank you for telling me; that sounds really difficult. Earlier you mentioned stress at 0 out of 10. Could you tell me a bit more about how things feel overall, and what support you'd want?  
 **Patient:** I suppose I didn't want to admit it at first. I'd like help getting my sleep back and being able to work again.  
-**Agent:** Thank you for being so open with me. I have what I need and will prepare a summary for a professional to review.  
-**Agent:** Thank you for taking the time to answer these questions. Your responses have been organised into a summary that a qualified professional will review. This screening is not a diagnosis. If things get worse or you feel unsafe at any point, please contact local emergency services or a crisis line.  
+**Agent:** Thank you for being so open. A few last questions: how would you rate the quality of your sleep, your energy from 1 to 10, and how well are you keeping up with things like eating and washing?  
+**Patient:** Sleep quality is very poor. My energy is about 3 out of 10, and I'm only just keeping up with eating and washing.  
+**Agent:** Thank you. I have what I need and will prepare a summary for a professional to review.  
+**Agent:** Thanks, your answers are now with a clinician. If you ever feel unsafe, contact emergency services or a crisis line.  
 
 ### Execution trace (nodes, tool calls, routing, reflection)
 
-**Run 1 · `start`** (`feee11d17576`): END
+**Run 1 · `start`** (`1bbd14379010`): END
 
 | # | Node / decision | What happened |
 |---|---|---|
 | 0 | note | update_state(as_node=interviewer): seeded fixed greeting (no LLM call) |
 
-**Run 2 · `turn`** (`cd4cc70aac78`): load_context → interviewer → tools → interviewer → END
+**Run 2 · `turn`** (`a574e9e3e39e`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -379,34 +381,47 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | 6 | `interviewer` | says “Thanks for letting me know. How has your sleep been, and how are things day to day?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 3 · `turn`** (`408b97f74d34`): load_context → interviewer → tools → interviewer → END
+**Run 3 · `turn`** (`d9c15dcb77b9`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
 | 0 | `load_context` | completion_pct=44.4; requires_urgent_escalation=False; risk_flags=['panic_language:elevated'] |
 | 1 | ↳ `route_after_load` | → `interviewer` |
-| 2 | `interviewer` | calls `store_assessment_response(domain=anxiety, fields=['panic_attacks', 'physical_symptoms'])`; calls `store_assessment_response(domain=sleep, fields=['average_sleep_hours', 'reports_sleep_problems', 'sleep_quality', 'wakes_unrefreshed'])`; calls `store_assessment_response(domain=functioning, fields=['days_missed_last_month', 'energy_level', 'self_care', 'social_engagement', 'work_study_impact'])`; calls `validate_and_audit_responses()` |
+| 2 | `interviewer` | calls `store_assessment_response(domain=anxiety, fields=['panic_attacks'])`; calls `store_assessment_response(domain=sleep, fields=['average_sleep_hours', 'reports_sleep_problems'])`; calls `store_assessment_response(domain=functioning, fields=['social_engagement', 'work_study_impact'])`; calls `validate_and_audit_responses()` |
 | 3 | ↳ `route_after_interviewer` | → `tools` |
-| 4 | `tools` | `store_assessment_response` → ok (domain=anxiety, completion_percentage=50.0); `store_assessment_response` → ok (domain=sleep, completion_percentage=66.7); `store_assessment_response` → ok (domain=functioning, completion_percentage=88.9); `validate_and_audit_responses` → ok (completion_percentage=88.9); completion_pct=88.9; requires_urgent_escalation=False; risk_flags=['frequent_panic:high', 'severe_sleep_deprivation:high', 'functional_impairment:elevated', 'panic_language:elevated']; inconsistencies=['low_stress_vs_acute_symptoms', 'positive_mood_vs_distress', 'no_anxiety_vs_panic'] |
+| 4 | `tools` | `store_assessment_response` → ok (domain=anxiety, completion_percentage=50.0); `store_assessment_response` → ok (domain=sleep, completion_percentage=61.1); `store_assessment_response` → ok (domain=functioning, completion_percentage=72.2); `validate_and_audit_responses` → ok (completion_percentage=72.2); completion_pct=72.2; requires_urgent_escalation=False; risk_flags=['frequent_panic:high', 'severe_sleep_deprivation:high', 'functional_impairment:elevated', 'panic_language:elevated']; inconsistencies=['low_stress_vs_acute_symptoms', 'positive_mood_vs_distress', 'no_anxiety_vs_panic'] |
 | 5 | ↳ `route_after_tools` | → `interviewer` |
 | 6 | `interviewer` | says “Thank you for telling me; that sounds really difficult. Earlier you mentioned stress at 0 out of 10. Could you” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 4 · `turn`** (`bb873ba0ef95`): load_context → interviewer → tools → interviewer → generate_summary → reflect_summary → INTERRUPT(clinician_review)
+**Run 4 · `turn`** (`e09fe238ca1a`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
-| 0 | `load_context` | completion_pct=88.9; requires_urgent_escalation=False; risk_flags=['frequent_panic:high', 'severe_sleep_deprivation:high', 'functional_impairment:elevated', 'panic_language:elevated']; inconsistencies=['low_stress_vs_acute_symptoms', 'positive_mood_vs_distress', 'no_anxiety_vs_panic'] |
+| 0 | `load_context` | completion_pct=72.2; requires_urgent_escalation=False; risk_flags=['frequent_panic:high', 'severe_sleep_deprivation:high', 'functional_impairment:elevated', 'panic_language:elevated']; inconsistencies=['low_stress_vs_acute_symptoms', 'positive_mood_vs_distress', 'no_anxiety_vs_panic'] |
 | 1 | ↳ `route_after_load` | → `interviewer` |
 | 2 | `interviewer` | calls `store_assessment_response(domain=concerns, fields=['narrative', 'support_goals'])`; calls `validate_and_audit_responses()` |
 | 3 | ↳ `route_after_interviewer` | → `tools` |
-| 4 | `tools` | `store_assessment_response` → ok (domain=concerns, completion_percentage=100.0); `validate_and_audit_responses` → ok (completion_percentage=100.0); completion_pct=100.0; requires_urgent_escalation=False; risk_flags=['frequent_panic:high', 'severe_sleep_deprivation:high', 'panic_language:elevated', 'functional_impairment:elevated', 'panic_language:elevated']; inconsistencies=['low_stress_vs_acute_symptoms', 'positive_mood_vs_distress', 'no_anxiety_vs_panic'] |
+| 4 | `tools` | `store_assessment_response` → ok (domain=concerns, completion_percentage=83.3); `validate_and_audit_responses` → ok (completion_percentage=83.3); completion_pct=83.3; requires_urgent_escalation=False; risk_flags=['frequent_panic:high', 'severe_sleep_deprivation:high', 'panic_language:elevated', 'functional_impairment:elevated', 'panic_language:elevated']; inconsistencies=['low_stress_vs_acute_symptoms', 'positive_mood_vs_distress', 'no_anxiety_vs_panic'] |
 | 5 | ↳ `route_after_tools` | → `interviewer` |
-| 6 | `interviewer` | says “Thank you for being so open with me. I have what I need and will prepare a summary for a professional to revie” |
+| 6 | `interviewer` | says “Thank you for being so open. A few last questions: how would you rate the quality of your sleep, your energy f” |
+| 7 | ↳ `route_after_interviewer` | → `END` |
+
+**Run 5 · `turn`** (`da983e4678d4`): load_context → interviewer → tools → interviewer → generate_summary → reflect_summary → INTERRUPT(clinician_review)
+
+| # | Node / decision | What happened |
+|---|---|---|
+| 0 | `load_context` | completion_pct=83.3; requires_urgent_escalation=False; risk_flags=['frequent_panic:high', 'severe_sleep_deprivation:high', 'panic_language:elevated', 'functional_impairment:elevated', 'panic_language:elevated']; inconsistencies=['low_stress_vs_acute_symptoms', 'positive_mood_vs_distress', 'no_anxiety_vs_panic'] |
+| 1 | ↳ `route_after_load` | → `interviewer` |
+| 2 | `interviewer` | calls `store_assessment_response(domain=sleep, fields=['sleep_quality'])`; calls `store_assessment_response(domain=functioning, fields=['energy_level', 'self_care'])`; calls `validate_and_audit_responses()` |
+| 3 | ↳ `route_after_interviewer` | → `tools` |
+| 4 | `tools` | `store_assessment_response` → ok (domain=sleep, completion_percentage=88.9); `store_assessment_response` → ok (domain=functioning, completion_percentage=100.0); `validate_and_audit_responses` → ok (completion_percentage=100.0); completion_pct=100.0; requires_urgent_escalation=False; risk_flags=['frequent_panic:high', 'severe_sleep_deprivation:high', 'panic_language:elevated', 'functional_impairment:elevated', 'panic_language:elevated']; inconsistencies=['low_stress_vs_acute_symptoms', 'positive_mood_vs_distress', 'no_anxiety_vs_panic'] |
+| 5 | ↳ `route_after_tools` | → `interviewer` |
+| 6 | `interviewer` | says “Thank you. I have what I need and will prepare a summary for a professional to review.” |
 | 7 | ↳ `route_after_interviewer` | → `generate_summary` |
 | 8 | `generate_summary` | draft summary generated |
 | 9 | ↳ `edge` | → `reflect_summary` |
-| 10 | `reflect_summary` | says “Thank you for taking the time to answer these questions. Your responses have been organised into a summary tha”; reflection_passed=True; reflection_attempts=1 |
+| 10 | `reflect_summary` | says “Thanks, your answers are now with a clinician. If you ever feel unsafe, contact emergency services or a crisis”; reflection_passed=True; reflection_attempts=1 |
 | 11 | ↳ `route_after_reflection` | → `clinician_review_gate` |
 | 12 | ⏸ `interrupt()` | clinician review gate (urgent=False) |
 
@@ -420,14 +435,14 @@ _Source: AssessmentSummaryOutput_
 |---|---|
 | Mood & emotional wellbeing | phq_little_interest: 0; phq_feeling_down: 0; overall_mood_rating: 9; hopelessness_level: none; self_harm_thoughts: no |
 | Stress levels | perceived_stress_level: 0; stress_triggers: none reported |
-| Sleep patterns | average_sleep_hours: 2.0; sleep_quality: very_poor; reports_sleep_problems: yes; wakes_unrefreshed: yes |
-| Anxiety-related experiences | gad_nervous_anxious: 0; gad_uncontrollable_worry: 0; panic_attacks: frequent; physical_symptoms: racing heart, shortness of breath |
-| Daily activities & functioning | work_study_impact: severe; social_engagement: minimal; energy_level: 2; self_care: somewhat_neglected; days_missed_last_month: 20 |
+| Sleep patterns | average_sleep_hours: 2.0; sleep_quality: very_poor; reports_sleep_problems: yes |
+| Anxiety-related experiences | gad_nervous_anxious: 0; gad_uncontrollable_worry: 0; panic_attacks: frequent |
+| Daily activities & functioning | work_study_impact: severe; social_engagement: minimal; energy_level: 3; self_care: somewhat_neglected |
 | Personal concerns & challenges | narrative: Initially described being completely fine before describing panic attacks, very little sleep and being unable to work.; support_goals: restore sleep, return to work |
 
 #### 2. Summary of reported concerns
 
-> The person rates their mood 9/10, reports reduced interest not at all, feeling down not at all. They describe stress at 0/10, linked to none reported. They report sleeping about 2.0 hours a night with very poor sleep quality. They report feeling on edge not at all and frequent panic attacks. Day to day they describe a severe impact on work or study, minimal social contact, energy around 2/10. They would like support with: restore sleep, return to work.
+> The person rates their mood 9/10, reports reduced interest not at all, feeling down not at all. They describe stress at 0/10, linked to none reported. They report sleeping about 2.0 hours a night with very poor sleep quality. They report feeling on edge not at all and frequent panic attacks. Day to day they describe a severe impact on work or study, minimal social contact, energy around 3/10. They would like support with: restore sleep, return to work.
 
 #### 3. Missing or inconsistent information
 
@@ -473,21 +488,21 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 
 ### Conversation
 
-**Agent:** Hello, and thank you for being here. I'm an intake assistant, and I'll ask you some questions about your mood, stress, sleep, worries, day-to-day life and anything else on your mind. This is a confidential screening, not a diagnosis: a qualified professional will review your answers. You can skip any question, and say "pause" at any time to continue later.  To start, how have you been feeling in yourself over the last couple of weeks?  
+**Agent:** Hi! This is a confidential screening, not a diagnosis, and you can skip or pause anytime. How have you been feeling over the last two weeks?  
 **Patient:** My mood has been very low, maybe 2 out of 10. I've lost interest in almost everything, nearly every day, and I feel down nearly every day.  
 **Agent:** I'm really sorry you're feeling this way. Can I ask how hopeful you feel about things getting better?  
 **Patient:** I don't. Everything feels hopeless and I've been thinking about ending my life.  
-**Agent:** Thank you for telling me. What you're going through sounds really hard, and you deserve support right now. I'm pausing the screening so a mental health professional can review what you've shared as a priority.  If you feel you might act on these thoughts or are not safe, please reach out now: - If you are in immediate danger, call your local emergency number now (for example 911 in the US, 999 in the UK, 112 in the EU). - US: call or text 988 (Suicide & Crisis Lifeline). - UK & Ireland: call Samaritans on 116 123. - Anywhere: find a free, confidential helpline at https://findahelpline.com.  You don't have to go through this alone.  
+**Agent:** Thank you for telling me. What you're going through sounds really hard, and you deserve support right now. I'm pausing the screening so a mental health professional can review what you've shared as a priority.  If you feel you might act on these thoughts or are not safe, please reach out now: - If you are in immediate danger, call your local emergency number now. - Find a free, confidential crisis line in your country at https://findahelpline.com. - Examples: 988 in the US (call or text), Samaritans 116 123 in the UK and Ireland, 112 for emergencies across the EU.  You don't have to go through this alone.  
 
 ### Execution trace (nodes, tool calls, routing, reflection)
 
-**Run 1 · `start`** (`b1e5811905b7`): END
+**Run 1 · `start`** (`de8b2566b658`): END
 
 | # | Node / decision | What happened |
 |---|---|---|
 | 0 | note | update_state(as_node=interviewer): seeded fixed greeting (no LLM call) |
 
-**Run 2 · `turn`** (`dd57b3de0c32`): load_context → interviewer → tools → interviewer → END
+**Run 2 · `turn`** (`1bfe511a36e6`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -500,7 +515,7 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | 6 | `interviewer` | says “I'm really sorry you're feeling this way. Can I ask how hopeful you feel about things getting better?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 3 · `turn`** (`07c0f1f221d5`): load_context → interviewer → escalation_summary → INTERRUPT(clinician_review)
+**Run 3 · `turn`** (`a48950a91d31`): load_context → interviewer → escalation_summary → INTERRUPT(clinician_review)
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -578,8 +593,8 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | ✅ | Pause handled without an LLM call (pause_session node) | ['load_context', 'interviewer', 'pause_session', 'END'] |
 | ✅ | Status became 'interrupted' | interrupted |
 | ✅ | 2 domains saved before the pause | 33.3 |
-| ✅ | A separate OS process read the same checkpoint | pid 107825 |
-| ✅ | Fresh process sees identical state (messages, completion, status) | {'pid': 107825, 'status': 'interrupted', 'completion_pct': 33.3, 'message_count': 12, 'user_messages': ["My mood is okay, around 7 out of 10. Less interest in t |
+| ✅ | A separate OS process read the same checkpoint | pid 221 |
+| ✅ | Fresh process sees identical state (messages, completion, status) | {'pid': 221, 'status': 'interrupted', 'completion_pct': 33.3, 'message_count': 12, 'user_messages': ["My mood is okay, around 7 out of 10. Less interest in thin |
 | ✅ | Resumed on the same session_id with full history | 4 user messages |
 | ✅ | Resume continued from the checkpoint (in_progress, 50%) | in_progress 50.0% |
 
@@ -588,29 +603,29 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | Snapshot | Status | Completion | Messages | Next nodes |
 |---|---|---|---|---|
 | after_pause | `interrupted` | 33.3% | 12 | [] |
-| fresh_process (pid 107825) | `interrupted` | 33.3% | 12 | [] |
+| fresh_process (pid 221) | `interrupted` | 33.3% | 12 | [] |
 
 ### Conversation
 
-**Agent:** Hello, and thank you for being here. I'm an intake assistant, and I'll ask you some questions about your mood, stress, sleep, worries, day-to-day life and anything else on your mind. This is a confidential screening, not a diagnosis: a qualified professional will review your answers. You can skip any question, and say "pause" at any time to continue later.  To start, how have you been feeling in yourself over the last couple of weeks?  
+**Agent:** Hi! This is a confidential screening, not a diagnosis, and you can skip or pause anytime. How have you been feeling over the last two weeks?  
 **Patient:** My mood is okay, around 7 out of 10. Less interest in things on several days, but I haven't really felt down. No thoughts of hurting myself.  
 **Agent:** Thank you. How stressed have you been feeling, from 0 to 10, and what's causing it?  
 **Patient:** Stress is about 4 out of 10, mainly because of moving house.  
 **Agent:** Moving is a big change. Next, how has your sleep been?  
 **Patient:** I need to stop here and continue later.  
-**Agent:** No problem. I've saved your progress, and you can pick up where you left off whenever you're ready. Take care of yourself in the meantime.  
+**Agent:** Your progress is saved. Come back whenever you're ready and we'll pick up where you left off.  
 **Patient:** I'm back. I sleep about 7 hours a night, good quality, and no real sleep problems.  
 **Agent:** Welcome back, and thanks for picking up where we left off. Next, I'd like to ask about worry and feeling on edge.  
 
 ### Execution trace (nodes, tool calls, routing, reflection)
 
-**Run 1 · `start`** (`3e689727fc41`): END
+**Run 1 · `start`** (`b82f237c2424`): END
 
 | # | Node / decision | What happened |
 |---|---|---|
 | 0 | note | update_state(as_node=interviewer): seeded fixed greeting (no LLM call) |
 
-**Run 2 · `turn`** (`225988522fe1`): load_context → interviewer → tools → interviewer → END
+**Run 2 · `turn`** (`113fd1de8fb7`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -623,7 +638,7 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | 6 | `interviewer` | says “Thank you. How stressed have you been feeling, from 0 to 10, and what's causing it?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 3 · `turn`** (`cf8c61260447`): load_context → interviewer → tools → interviewer → END
+**Run 3 · `turn`** (`a64c40c5e1ba`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -636,7 +651,7 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | 6 | `interviewer` | says “Moving is a big change. Next, how has your sleep been?” |
 | 7 | ↳ `route_after_interviewer` | → `END` |
 
-**Run 4 · `turn`** (`413f10932bf4`): load_context → interviewer → pause_session → END
+**Run 4 · `turn`** (`9ad7c2a0dfdb`): load_context → interviewer → pause_session → END
 
 | # | Node / decision | What happened |
 |---|---|---|
@@ -644,10 +659,10 @@ _Disclaimer:_ This is an initial screening summary of self-reported information.
 | 1 | ↳ `route_after_load` | → `interviewer` |
 | 2 | `interviewer` | no-op (skipped: deterministic path) |
 | 3 | ↳ `route_after_interviewer` | → `pause_session` |
-| 4 | `pause_session` | says “No problem. I've saved your progress, and you can pick up where you left off whenever you're ready. Take care ” |
+| 4 | `pause_session` | says “Your progress is saved. Come back whenever you're ready and we'll pick up where you left off.” |
 | 5 | ↳ `edge` | → `END` |
 
-**Run 5 · `turn`** (`42fc0c09499a`): load_context → interviewer → tools → interviewer → END
+**Run 5 · `turn`** (`3d8d81c0500a`): load_context → interviewer → tools → interviewer → END
 
 | # | Node / decision | What happened |
 |---|---|---|

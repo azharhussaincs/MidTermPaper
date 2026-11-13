@@ -1,0 +1,9 @@
+{
+  "source": "backend/app/graph/prompts.py, backend/app/schemas/assessment.py",
+  "greeting": "Hi! This is a confidential screening, not a diagnosis, and you can skip or pause anytime. How have you been feeling over the last two weeks?",
+  "crisis_escalation_message": "Thank you for telling me. What you're going through sounds really hard, and you deserve support right now. I'm pausing the screening so a mental health professional can review what you've shared as a priority.\n\nIf you feel you might act on these thoughts or are not safe, please reach out now:\n- If you are in immediate danger, call your local emergency number now.\n- Find a free, confidential crisis line in your country at https://findahelpline.com.\n- Examples: 988 in the US (call or text), Samaritans 116 123 in the UK and Ireland, 112 for emergencies across the EU.\n\nYou don't have to go through this alone.",
+  "pause_message": "Your progress is saved. Come back whenever you're ready and we'll pick up where you left off.",
+  "review_pending_message": "Thanks, your answers are now with a clinician. If you ever feel unsafe, contact emergency services or a crisis line.",
+  "crisis_resources": "- If you are in immediate danger, call your local emergency number now.\n- Find a free, confidential crisis line in your country at https://findahelpline.com.\n- Examples: 988 in the US (call or text), Samaritans 116 123 in the UK and Ireland, 112 for emergencies across the EU.",
+  "non_diagnostic_disclaimer": "This is an initial screening summary of self-reported information. It is not a diagnosis and does not recommend any treatment or medication. A qualified mental health professional must review it. If you are in immediate danger or thinking about harming yourself, contact local emergency services or a crisis line right away."
+}

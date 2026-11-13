@@ -36,7 +36,12 @@ from app.db.models import AssessmentRecord, AssessmentStatus
 from app.db.repositories import assessment_repo as repo
 from app.graph import prompts
 from app.graph.state import AssessmentGraphState
-from app.schemas.assessment import AssessmentSummaryOutput, ClinicianReviewDecision
+from app.schemas.assessment import (
+    UNGROUNDED_ERROR,
+    AssessmentSummaryOutput,
+    ClinicianReviewDecision,
+    ungrounded_fields,
+)
 from app.services import assessment_audit as audit
 from app.tools.assessment_tools import ASSESSMENT_TOOLS
 
@@ -98,6 +103,30 @@ def _last_human_text(state: AssessmentGraphState) -> str | None:
     return None
 
 
+def _previous_question(state: AssessmentGraphState) -> str | None:
+    """Text of the assistant message the latest user message replies to (tool-call turns skipped)."""
+    messages = state.get("messages") or []
+    for message in reversed(messages[:-1]):
+        if isinstance(message, AIMessage) and str(message.text).strip():
+            return str(message.text)
+        if isinstance(message, HumanMessage):
+            return None
+    return None
+
+
+def _exchanges(state: AssessmentGraphState) -> list[tuple[str | None, str]]:
+    """Every patient reply paired with the assistant question it answered (None if there was none)."""
+    pairs: list[tuple[str | None, str]] = []
+    question: str | None = None
+    for message in state.get("messages") or []:
+        if isinstance(message, AIMessage) and str(message.text).strip():
+            question = str(message.text)
+        elif isinstance(message, HumanMessage):
+            pairs.append((question, str(message.text)))
+            question = None
+    return pairs
+
+
 def _pause_requested(state: AssessmentGraphState) -> bool:
     text = _last_human_text(state)
     return bool(text and _PAUSE_REQUEST.search(text))
@@ -122,7 +151,9 @@ def sync_metrics(record: AssessmentRecord, message_flags: list[dict[str, Any]]) 
     """
     data = repo.load_domain_data(record)
     missing = audit.missing_fields(data)
-    inconsistencies = [i.model_dump(mode="json") for i in audit.find_inconsistencies(data)]
+    inconsistencies = [
+        i.model_dump(mode="json") for i in audit.find_inconsistencies(data, record.answer_revisions or [])
+    ]
     flags = _merge_flags([f.model_dump(mode="json") for f in audit.find_risk_flags(data)], message_flags)
 
     record.missing_fields = [m.model_dump(mode="json") for m in missing]
@@ -213,8 +244,15 @@ class AssessmentNodes:
         """Ensure the DB record exists, screen the new message, and mirror DB metrics into state."""
         session_id = _session_id(config)
         text = _last_human_text(state)
+        question = _previous_question(state) if text else None
         new_flags = (
-            [f.model_dump(mode="json") for f in audit.scan_text_for_risk(text, source="User said")]
+            [
+                f.model_dump(mode="json")
+                for f in [
+                    *audit.scan_text_for_risk(text, source="User said"),
+                    *(audit.scan_safety_answer(question, text) if question else []),
+                ]
+            ]
             if text
             else []
         )
@@ -289,10 +327,23 @@ class AssessmentNodes:
                 args = {k: v for k, v in (call.get("args") or {}).items() if k != "session_id"}
                 if "session_id" in tool.args_schema.model_fields:  # type: ignore[union-attr]
                     args["session_id"] = session_id
-                try:
-                    output = tool.invoke(args)
-                except Exception as exc:  # validation errors etc. go back to the model
-                    output = {"ok": False, "error": str(exc)}
+                ungrounded = (
+                    ungrounded_fields(args.get("data") or {}, _exchanges(state))
+                    if call["name"] == "store_assessment_response" and isinstance(args.get("data"), dict)
+                    else []
+                )
+                if ungrounded:
+                    # Reject the whole call (nothing half-stored); the model resends the rest.
+                    output = {
+                        "ok": False,
+                        "error": "Not stored: answer not given by the person",
+                        "errors": [{"field": field, "message": UNGROUNDED_ERROR} for field in ungrounded],
+                    }
+                else:
+                    try:
+                        output = tool.invoke(args)
+                    except Exception as exc:  # validation errors etc. go back to the model
+                        output = {"ok": False, "error": str(exc)}
             results.append(
                 stamp(
                     ToolMessage(

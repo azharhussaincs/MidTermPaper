@@ -1,0 +1,35 @@
+# MindBridge Intake AI backend — Python 3.11+ (Linux, macOS, Windows)
+# Every pin is the version installed and tested in backend/.venv; the set resolves cleanly
+# on all three platforms (`uv pip compile --python-platform linux|windows|macos`).
+# Install:  pip install -r requirements.txt
+
+# --- Web framework ---
+fastapi==0.162.0
+uvicorn[standard]==0.54.0          # uvloop is skipped automatically on Windows
+
+# --- Agent orchestration ---
+langgraph==1.2.18
+langgraph-checkpoint-sqlite==3.1.2
+langchain==1.4.7
+langchain-core==1.7.1
+langsmith==0.14.16
+
+# --- LLM providers ---
+langchain-ollama==1.1.0
+langchain-google-genai==4.4.2
+
+# --- Data & validation ---
+pydantic==2.14.2
+pydantic-settings==2.16.2
+sqlalchemy[asyncio]==2.1.6
+greenlet==3.5.6                    # required by SQLAlchemy's async engine (not installed by default in 2.1)
+aiosqlite==0.22.1
+
+# --- Utilities ---
+httpx==0.28.1
+python-dotenv==1.2.4
+
+# --- Testing & linting ---
+pytest==8.4.2
+pytest-asyncio==1.2.0
+ruff==0.14.3

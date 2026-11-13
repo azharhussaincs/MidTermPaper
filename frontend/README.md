@@ -1,32 +1,24 @@
-# React + TypeScript + Vite
+# MindBridge frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 + TypeScript + Tailwind CSS 4, built with Vite. It talks to the FastAPI backend only through the typed
+client in `src/api/client.ts`; `src/types/api.ts` mirrors the backend's Pydantic schemas.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+cp .env.example .env      # VITE_API_BASE_URL=http://localhost:8000
+npm run dev               # http://localhost:5173
+npm run build             # type-check (tsc -b) and production build into dist/
+npm run lint              # oxlint
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+| Path | Contents |
+|---|---|
+| `src/App.tsx` | App shell: home, patient check-in and clinician review |
+| `src/components/Home.tsx` | What MindBridge is, the three stages, entry points |
+| `src/components/TopBar.tsx` | Header with the stage navigation; AI assistant settings (clinician workspace only) |
+| `src/components/PatientWorkspace.tsx`, `patient/` | Guided check-in: conversation, progress rail, quick replies, saved check-ins, confirmation |
+| `src/components/ClinicianWorkspace.tsx`, `clinician/` | Review queue, case overview, review areas, answers to double-check, answers by topic, missing information, sign-off |
+| `src/components/CrisisBanner.tsx` | Fixed crisis contacts shown when a safety concern is disclosed |
+| `src/lib/` | Topic metadata, formatting, risk grouping, quick-reply detection, style helpers |
+
+See the project README for the full setup, including the one-command `start.sh` / `start.bat`.

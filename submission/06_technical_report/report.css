@@ -1,0 +1,19 @@
+@page { size: A4; margin: 14mm 16mm 14mm 16mm; @bottom-center { content: counter(page); font-size: 8pt; color: #78736b; } }
+html { font-family: "Liberation Sans", "Helvetica Neue", Arial, sans-serif; font-size: 9.4pt; line-height: 1.38; color: #1b2422; }
+body { margin: 0; }
+h1 { font-size: 19pt; margin: 0 0 2pt; color: #0f5f59; }
+h1 + p { font-size: 11pt; color: #45423c; margin: 0 0 2pt; }
+h2 { font-size: 12.5pt; margin: 13pt 0 4pt; padding-bottom: 2pt; border-bottom: 1px solid #e4e1dc; color: #0f5f59; break-after: avoid; }
+p { margin: 0 0 5pt; text-align: justify; }
+ul, ol { margin: 0 0 5pt; padding-left: 15pt; }
+li { margin: 0 0 1.5pt; }
+code { font-family: "DejaVu Sans Mono", Consolas, monospace; font-size: 8.2pt; background: #f1efeb; padding: 0 2px; border-radius: 2px; }
+table { width: 100%; border-collapse: collapse; margin: 3pt 0 7pt; font-size: 8.3pt; line-height: 1.3; break-inside: avoid; }
+th { background: #e8f5f3; text-align: left; font-weight: 700; }
+th, td { border: 1px solid #e4e1dc; padding: 2.5pt 4pt; vertical-align: top; }
+figure { margin: 4pt 0 8pt; text-align: center; break-inside: avoid; }
+figure img { max-width: 100%; }
+figure.fig2 img { width: 55%; }
+figure:not(.fig2) img { width: 94%; }
+figcaption { font-size: 8.2pt; color: #66625b; margin-top: 2pt; }
+a { color: #0f5f59; text-decoration: none; }

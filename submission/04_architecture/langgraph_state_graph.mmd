@@ -1,0 +1,17 @@
+flowchart TD
+    START((START)) --> LC[load_context<br/>ensure DB record · scan message for crisis language · sync audit metrics]
+    LC -->|route_after_load: reviewed| E1((END))
+    LC -->|route_after_load| IV[interviewer<br/>LLM + 4 tools · skipped on crisis/pause]
+    IV -->|route_after_interviewer: tool_calls| TN[tools<br/>session_id injected from thread · refresh metrics]
+    TN -->|route_after_tools: urgent| ES
+    TN -->|route_after_tools| IV
+    IV -->|urgent escalation| ES[escalation_summary<br/>fixed crisis resources · rule-built URGENT summary]
+    IV -->|pause / continue later| PS[pause_session<br/>status = interrupted]
+    IV -->|complete or finalize_requested| GS[generate_summary<br/>LLM narrative + deterministic data]
+    IV -->|waiting for the user| E2((END))
+    PS --> E3((END))
+    GS --> RS[reflect_summary<br/>rule checks + LLM reviewer]
+    RS -->|route_after_reflection: failed and attempts < 2| GS
+    RS -->|passed or attempts exhausted| HG
+    ES --> HG[clinician_review_gate<br/>interrupt — waits for Command resume]
+    HG -->|approved / flagged · status = reviewed| E4((END))

@@ -59,7 +59,21 @@ def init_db(db_path: str | Path | None = None, *, echo: bool = False) -> Engine:
     from app.db import models  # noqa: F401  (register tables on Base.metadata)
 
     Base.metadata.create_all(_engine)
+    _add_missing_columns(_engine)
     return _engine
+
+
+# create_all never alters an existing table: columns added after a database file was created.
+_ADDED_COLUMNS = {"assessment_records": {"answer_revisions": "JSON NOT NULL DEFAULT '[]'"}}
+
+
+def _add_missing_columns(engine: Engine) -> None:
+    with engine.begin() as conn:
+        for table, columns in _ADDED_COLUMNS.items():
+            existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
+            for name, ddl in columns.items():
+                if name not in existing:
+                    conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
 
 
 def dispose_db() -> None:

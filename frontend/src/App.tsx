@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { api } from './api/client'
 import { ClinicianWorkspace } from './components/ClinicianWorkspace'
+import { Home } from './components/Home'
 import { PatientWorkspace } from './components/PatientWorkspace'
 import { TopBar, type Workspace } from './components/TopBar'
 import { usePolling } from './hooks/usePolling'
@@ -9,9 +10,10 @@ const WORKSPACE_KEY = 'mindbridge:workspace'
 
 function initialWorkspace(): Workspace {
   try {
-    return localStorage.getItem(WORKSPACE_KEY) === 'clinician' ? 'clinician' : 'patient'
+    const stored = localStorage.getItem(WORKSPACE_KEY)
+    return stored === 'clinician' || stored === 'patient' ? stored : 'home'
   } catch {
-    return 'patient'
+    return 'home'
   }
 }
 
@@ -38,7 +40,13 @@ export default function App() {
         awaitingReviewCount={queue.data?.awaiting_review.length ?? 0}
       />
       <div className="min-h-0 flex-1">
-        {workspace === 'patient' ? (
+        {workspace === 'home' ? (
+          <Home
+            awaitingReviewCount={queue.data?.awaiting_review.length ?? 0}
+            onStartCheckIn={() => switchWorkspace('patient')}
+            onOpenReview={() => switchWorkspace('clinician')}
+          />
+        ) : workspace === 'patient' ? (
           <PatientWorkspace onQueueChanged={() => void queue.refresh()} />
         ) : (
           <ClinicianWorkspace queue={queue.data} queueError={queue.error} refreshQueue={queue.refresh} />

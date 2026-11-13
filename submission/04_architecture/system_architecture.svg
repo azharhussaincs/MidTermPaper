@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 820" width="1400" height="820" font-family="Inter, 'Segoe UI', Arial, sans-serif">
+  <title>MindBridge system architecture</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8a857d"/>
+    </marker>
+    <marker id="t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#0f766e"/>
+    </marker>
+    <style>
+      .ttl{font-size:26px;font-weight:700;fill:#1b2422}
+      .sub{font-size:14px;fill:#66625b}
+      .ct{font-size:15px;font-weight:700;fill:#1b2422}
+      .cs{font-size:12px;fill:#66625b}
+      .bn{font-size:14px;font-weight:600;fill:#1b2422}
+      .bt{font-size:12px;fill:#5a564f}
+      .mono{font-family:'JetBrains Mono',Menlo,Consolas,monospace;font-size:12.5px;font-weight:600;fill:#1b2422}
+      .lbl{font-size:12px;fill:#66625b}
+      .hl{font-size:12.5px;font-weight:600;fill:#0f766e}
+      .box{fill:#ffffff;stroke:#cfcbc4;stroke-width:1.25}
+      .acc{fill:#e8f5f3;stroke:#0f766e;stroke-width:2}
+      .ctr{fill:#f6f5f2;stroke:#e4e1dc;stroke-width:1.25}
+      .ln{fill:none;stroke:#8a857d;stroke-width:1.4}
+      .lt{fill:none;stroke:#0f766e;stroke-width:1.8;stroke-dasharray:6 4}
+    </style>
+  </defs>
+
+  <rect width="1400" height="820" fill="#ffffff"/>
+  <text x="30" y="44" class="ttl">MindBridge · system architecture</text>
+  <text x="30" y="68" class="sub">Patient check-in → AI screening (LangGraph agent) → Clinician review. Every summary stops at a human before it is final.</text>
+
+  <!-- Frontend -->
+  <rect x="30" y="90" width="280" height="380" rx="14" class="ctr"/>
+  <text x="48" y="116" class="ct">React frontend</text>
+  <text x="48" y="133" class="cs">Vite · TypeScript · Tailwind</text>
+  <rect x="48" y="148" width="244" height="70" rx="10" class="box"/>
+  <text x="62" y="175" class="bn">Patient check-in</text>
+  <text x="62" y="195" class="bt">guided conversation, pause,</text>
+  <text x="62" y="210" class="bt">send early, crisis contacts</text>
+  <rect x="48" y="242" width="244" height="70" rx="10" class="box"/>
+  <text x="62" y="269" class="bn">Clinician review</text>
+  <text x="62" y="289" class="bt">queue (urgent first), summary,</text>
+  <text x="62" y="304" class="bt">flags, approve / follow-up</text>
+
+  <!-- Backend -->
+  <rect x="350" y="90" width="260" height="380" rx="14" class="ctr"/>
+  <text x="368" y="116" class="ct">FastAPI backend</text>
+  <text x="368" y="133" class="cs">Python 3.11 · 10 endpoints</text>
+  <rect x="368" y="148" width="224" height="70" rx="10" class="box"/>
+  <text x="382" y="175" class="bn">REST API</text>
+  <text x="382" y="195" class="bt">/api/assessments · /api/clinician</text>
+  <text x="382" y="210" class="bt">/api/system</text>
+  <rect x="368" y="242" width="224" height="86" rx="10" class="box"/>
+  <text x="382" y="269" class="bn">Workflow API</text>
+  <text x="382" y="289" class="bt">run_assessment_turn</text>
+  <text x="382" y="304" class="bt">finalize_session</text>
+  <text x="382" y="319" class="bt">submit_clinician_review</text>
+  <rect x="368" y="352" width="224" height="86" rx="10" class="box"/>
+  <text x="382" y="379" class="bn">Execution logger</text>
+  <text x="382" y="399" class="bt">one JSON event per graph step</text>
+  <text x="382" y="414" class="bt">logs/*.jsonl · LangSmith when</text>
+  <text x="382" y="429" class="bt">a LANGCHAIN_API_KEY is set</text>
+
+  <!-- LangGraph -->
+  <rect x="650" y="90" width="440" height="520" rx="14" class="ctr"/>
+  <text x="668" y="116" class="ct">LangGraph StateGraph</text>
+  <text x="668" y="133" class="cs">8 nodes · 4 conditional routers · compiled with a checkpointer</text>
+  <rect x="668" y="148" width="404" height="80" rx="10" class="box"/>
+  <text x="682" y="172" class="mono">AssessmentGraphState (TypedDict)</text>
+  <text x="682" y="191" class="bt">messages (add_messages) · session_id · completion_pct</text>
+  <text x="682" y="206" class="bt">missing_fields · inconsistencies · risk_flags · urgent flag</text>
+  <text x="682" y="221" class="bt">draft_summary · reflection_* · clinician_* · final_output</text>
+
+  <rect x="668" y="250" width="190" height="44" rx="9" class="box"/>
+  <text x="763" y="277" text-anchor="middle" class="mono">load_context</text>
+  <rect x="668" y="320" width="190" height="44" rx="9" class="box"/>
+  <text x="763" y="347" text-anchor="middle" class="mono">interviewer</text>
+  <rect x="668" y="390" width="190" height="44" rx="9" class="box"/>
+  <text x="763" y="417" text-anchor="middle" class="mono">generate_summary</text>
+  <rect x="668" y="460" width="190" height="44" rx="9" class="box"/>
+  <text x="763" y="487" text-anchor="middle" class="mono">reflect_summary</text>
+  <rect x="668" y="530" width="190" height="44" rx="9" class="acc"/>
+  <text x="763" y="557" text-anchor="middle" class="mono">clinician_review_gate</text>
+
+  <rect x="882" y="250" width="190" height="44" rx="9" class="box"/>
+  <text x="977" y="277" text-anchor="middle" class="mono">pause_session</text>
+  <rect x="882" y="320" width="190" height="44" rx="9" class="box"/>
+  <text x="977" y="347" text-anchor="middle" class="mono">tools</text>
+  <rect x="882" y="460" width="190" height="44" rx="9" class="box"/>
+  <text x="977" y="487" text-anchor="middle" class="mono">escalation_summary</text>
+
+  <path d="M763 294V320" class="ln" marker-end="url(#a)"/>
+  <path d="M858 334H882" class="ln" marker-end="url(#a)"/>
+  <path d="M882 352H858" class="ln" marker-end="url(#a)"/>
+  <path d="M820 320V272H882" class="ln" marker-end="url(#a)"/>
+  <path d="M763 364V390" class="ln" marker-end="url(#a)"/>
+  <path d="M763 434V460" class="ln" marker-end="url(#a)"/>
+  <path d="M763 504V530" class="ln" marker-end="url(#a)"/>
+  <path d="M668 482H658V412H668" class="ln" marker-end="url(#a)"/>
+  <path d="M977 364V460" class="ln" marker-end="url(#a)"/>
+  <path d="M977 504V552H858" class="ln" marker-end="url(#a)"/>
+  <text x="812" y="311" text-anchor="end" class="lbl">pause</text>
+  <text x="985" y="418" class="lbl">urgent disclosure</text>
+  <text x="772" y="380" class="lbl">complete / sent early</text>
+  <text x="668" y="596" class="lbl">a summary that fails its first reflect_summary check is regenerated once</text>
+
+  <!-- Right column -->
+  <rect x="1130" y="148" width="240" height="86" rx="10" class="box"/>
+  <text x="1144" y="175" class="bn">LangChain chat model</text>
+  <text x="1144" y="195" class="bt">bind_tools(4 tools); used by</text>
+  <text x="1144" y="210" class="bt">interviewer, generate_summary</text>
+  <text x="1144" y="225" class="bt">and reflect_summary</text>
+  <rect x="1130" y="258" width="240" height="66" rx="10" class="box"/>
+  <text x="1144" y="285" class="bn">Hybrid LLM manager</text>
+  <text x="1144" y="305" class="bt">Google Gemini (cloud) or</text>
+  <text x="1144" y="320" class="bt">Ollama (local) · auto fallback</text>
+  <rect x="1130" y="348" width="240" height="132" rx="10" class="box"/>
+  <text x="1144" y="375" class="bn">4 LangChain tools</text>
+  <text x="1144" y="395" class="mono" style="font-size:10.5px">store_assessment_response</text>
+  <text x="1144" y="411" class="mono" style="font-size:10.5px">retrieve_assessment_record</text>
+  <text x="1144" y="427" class="mono" style="font-size:10.5px">validate_and_audit_responses</text>
+  <text x="1144" y="443" class="mono" style="font-size:10.5px">get_screening_questionnaire_guide</text>
+  <text x="1144" y="465" class="bt">Pydantic-validated; audit is rule-based</text>
+  <rect x="1130" y="504" width="240" height="70" rx="10" class="box"/>
+  <text x="1144" y="531" class="bn">Assessment DB (SQLite)</text>
+  <text x="1144" y="551" class="bt">AssessmentRecord: answers, audit,</text>
+  <text x="1144" y="566" class="bt">answer revisions, summary, status</text>
+
+  <rect x="650" y="640" width="440" height="66" rx="10" class="box"/>
+  <text x="668" y="667" class="bn">Checkpoints DB (SqliteSaver)</text>
+  <text x="668" y="687" class="bt">graph state saved after every step · thread_id = session_id ·</text>
+  <text x="668" y="701" class="bt">a paused check-in resumes later, even after a restart</text>
+
+  <!-- Connectors -->
+  <path d="M292 183H368" class="ln" marker-end="url(#a)"/>
+  <path d="M292 277H330V198H368" class="ln" marker-end="url(#a)"/>
+  <text x="300" y="173" class="lbl">JSON</text>
+  <path d="M480 218V242" class="ln" marker-end="url(#a)"/>
+  <path d="M480 328V352" class="ln" marker-end="url(#a)"/>
+  <path d="M592 285H650" class="ln" marker-end="url(#a)"/>
+  <text x="598" y="277" class="lbl">stream</text>
+  <path d="M1090 190H1130" class="ln" marker-end="url(#a)"/>
+  <path d="M1250 234V258" class="ln" marker-end="url(#a)"/>
+  <path d="M1072 360H1130" class="ln" marker-end="url(#a)"/>
+  <path d="M1250 480V504" class="ln" marker-end="url(#a)"/>
+  <path d="M870 610V640" class="ln" marker-end="url(#a)"/>
+
+  <!-- Human-in-the-loop -->
+  <path d="M668 552H636V748H170V312" class="lt" marker-end="url(#t)"/>
+  <text x="190" y="774" class="hl">Human-in-the-loop: interrupt() pauses the run and the case appears in the clinician's queue;</text>
+  <text x="190" y="796" class="hl">approve or request follow-up resumes the same thread with Command(resume=…) and records the decision.</text>
+</svg>

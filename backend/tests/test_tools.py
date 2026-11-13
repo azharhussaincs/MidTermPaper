@@ -7,12 +7,13 @@ Run: `pytest tests/test_tools.py -v` from the backend directory.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
 import pytest
 from langchain_core.utils.function_calling import convert_to_openai_tool
 
-from app.db.database import get_session
+from app.db.database import get_engine, get_session, init_db
 from app.db.models import AssessmentStatus
 from app.db.repositories import assessment_repo as repo
 from app.schemas.assessment import NON_DIAGNOSTIC_DISCLAIMER, AssessmentDomain, AssessmentSummaryOutput
@@ -176,6 +177,54 @@ def test_audit_detects_low_stress_and_great_mood_vs_panic_and_no_sleep() -> None
     low_stress = next(i for i in report["inconsistencies"] if i["code"] == "low_stress_vs_acute_symptoms")
     assert "severe panic attacks" in low_stress["description"] and "2h sleep" in low_stress["description"]
     assert {"severe_panic", "severe_sleep_deprivation"} <= codes(report["risk_flags"])
+
+
+def test_audit_keeps_a_contradiction_when_the_rating_is_later_overwritten() -> None:
+    """Live run, scenario 3: the model re-stored stress 0/10 as an inferred 10/10."""
+    store("stress", {"perceived_stress_level": 0})
+    store("anxiety", {"panic_attacks": "frequent"})
+    store("sleep", {"average_sleep_hours": 2})
+    store("stress", {"perceived_stress_level": 10, "stress_triggers": ["panic attacks"]})
+
+    report = audit()
+    found = {i["code"]: i for i in report["inconsistencies"]}
+
+    assert "low_stress_vs_acute_symptoms" in found
+    assert "Reported stress 0/10" in found["low_stress_vs_acute_symptoms"]["description"]
+    changed = found["changed_perceived_stress_level"]
+    assert changed["severity"] == "high"
+    assert "0/10" in changed["description"] and "10/10" in changed["description"]
+
+
+def test_restoring_the_original_answer_clears_the_revision_flag() -> None:
+    store("stress", {"perceived_stress_level": 4})
+    store("stress", {"perceived_stress_level": 7})
+    store("stress", {"perceived_stress_level": 4, "stress_triggers": ["work"]})
+
+    assert not any(i["code"].startswith("changed_") for i in audit()["inconsistencies"])
+
+
+def test_free_text_and_list_updates_are_not_revisions() -> None:
+    store("stress", {"stress_triggers": ["work"]})
+    store("stress", {"stress_triggers": ["work", "money"]})
+    store("mood", {"mood_description": "Tired"})
+    store("mood", {"mood_description": "Tired but hopeful"})
+
+    with get_session() as db:
+        assert repo.get_by_session_id(db, SID).answer_revisions == []
+
+
+def test_existing_database_gains_the_revisions_column(tmp_path: Path) -> None:
+    db_path = tmp_path / "older.db"
+    init_db(db_path)
+    with get_engine().begin() as conn:
+        conn.exec_driver_sql("ALTER TABLE assessment_records DROP COLUMN answer_revisions")
+
+    init_db(db_path)
+    with get_engine().connect() as conn:
+        columns = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(assessment_records)")}
+    assert "answer_revisions" in columns
+    assert store("stress", {"perceived_stress_level": 3})["ok"] is True
 
 
 def test_audit_detects_no_sleep_issues_vs_waking_exhausted() -> None:

@@ -9,10 +9,25 @@ export const DOMAIN_LABELS: Record<AssessmentDomain, string> = {
   concerns: 'Personal Concerns',
 }
 
-export const STATUS_LABELS: Record<AssessmentStatusName, string> = {
-  in_progress: 'In Progress',
-  interrupted: 'Interrupted',
-  awaiting_clinician_review: 'Awaiting Clinician Review',
+/**
+ * The stage shown to people. The workflow status alone cannot tell a safety escalation from a normal
+ * submission (both wait for a clinician), so urgency is folded in: an escalated check-in is
+ * "Interrupted · priority review", never "Submitted".
+ */
+export type DisplayStage = 'in_progress' | 'paused' | 'priority_review' | 'submitted' | 'reviewed'
+
+export function displayStage(status: AssessmentStatusName | null, urgent: boolean): DisplayStage {
+  if (status === 'reviewed') return 'reviewed'
+  if (urgent) return 'priority_review'
+  if (status === 'awaiting_clinician_review') return 'submitted'
+  return status === 'interrupted' ? 'paused' : 'in_progress'
+}
+
+export const STAGE_LABELS: Record<DisplayStage, string> = {
+  in_progress: 'In progress',
+  paused: 'Paused',
+  priority_review: 'Interrupted · priority review',
+  submitted: 'Submitted',
   reviewed: 'Reviewed',
 }
 
@@ -32,7 +47,7 @@ export const FIELD_LABELS: Record<string, string> = {
   overall_mood_rating: 'Self-rated mood',
   hopelessness_level: 'Hopelessness',
   self_harm_thoughts: 'Thoughts of self-harm',
-  who5_items: 'WHO-5 wellbeing items',
+  who5_items: 'WHO-5 wellbeing',
   mood_description: 'Mood in their words',
   perceived_stress_level: 'Perceived stress',
   stress_triggers: 'Stress triggers',

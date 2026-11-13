@@ -63,7 +63,8 @@ done
 
 # Leftovers from this project only (e.g. a reloader worker or esbuild service that outlived its parent).
 leftovers=""
-for pattern in "$ROOT/backend/.venv/bin/uvicorn app.main:app" "$ROOT/frontend/node_modules/.bin/vite" \
+for pattern in "$ROOT/backend/.venv/bin/python -m uvicorn app.main:app" "$ROOT/backend/.venv/bin/uvicorn app.main:app" \
+  "$ROOT/frontend/node_modules/.bin/vite" \
   "$ROOT/frontend/node_modules/@esbuild/"; do
   for pid in $(pgrep -f -- "$pattern" 2>/dev/null); do
     [ "$pid" != "$$" ] && belongs_to_project "$pid" && leftovers="$leftovers $(descendants "$pid")"

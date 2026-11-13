@@ -23,12 +23,14 @@ from app.db.repositories import assessment_repo as repo
 from app.questionnaires.guides import get_domain_guide
 from app.schemas.assessment import (
     DOMAIN_MODELS,
+    OPTION_ONLY_ERROR,
     REQUIRED_FIELDS,
     AssessmentDomain,
     AssessmentDomainData,
     AssessmentRecordRead,
     AuditReport,
     CompletionStatus,
+    option_only_fields,
     parse_domain,
 )
 from app.services import assessment_audit as audit
@@ -121,6 +123,11 @@ def store_assessment_response(session_id: str, domain: DomainName, data: dict[st
     """
     domain_enum = AssessmentDomain(domain)
     model = DOMAIN_MODELS[domain_enum]
+    if rejected := option_only_fields(data):
+        return _error(
+            f"Not stored for domain '{domain}'",
+            errors=[{"field": field, "message": OPTION_ONLY_ERROR} for field in rejected],
+        )
     try:
         validated = model.model_validate(data)
     except ValidationError as exc:
@@ -206,7 +213,7 @@ def validate_and_audit_responses(session_id: str) -> dict[str, Any]:
             session_id=session_id,
             completion=_completion(data, status),
             missing_fields=missing,
-            inconsistencies=audit.find_inconsistencies(data),
+            inconsistencies=audit.find_inconsistencies(data, record.answer_revisions or []),
             risk_flags=flags,
             requires_immediate_escalation=any(f.requires_immediate_escalation for f in flags),
             requires_professional_review=bool(flags) or not missing,

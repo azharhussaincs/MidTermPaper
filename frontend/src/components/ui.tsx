@@ -1,7 +1,7 @@
 import { AlertTriangle, CheckCircle2, Clock, PauseCircle, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from 'react'
-import { STATUS_LABELS } from '../lib/format'
-import { buttonClass, cn } from '../lib/styles'
+import { displayStage, STAGE_LABELS, type DisplayStage } from '../lib/format'
+import { buttonClass, CARD, cn } from '../lib/styles'
 import type { AssessmentStatusName } from '../types/api'
 
 // ---------------------------------------------------------------------------
@@ -12,7 +12,7 @@ export function Badge({ className, children }: { className?: string; children: R
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset',
         className,
       )}
     >
@@ -21,31 +21,23 @@ export function Badge({ className, children }: { className?: string; children: R
   )
 }
 
-const STATUS_STYLES: Record<AssessmentStatusName, { className: string; icon: ReactNode }> = {
+const STAGE_STYLES: Record<DisplayStage, { className: string; icon: ReactNode }> = {
   in_progress: { className: 'bg-sky-50 text-sky-700 ring-sky-200', icon: <Clock aria-hidden className="size-3" /> },
-  interrupted: { className: 'bg-amber-50 text-amber-800 ring-amber-200', icon: <PauseCircle aria-hidden className="size-3" /> },
-  awaiting_clinician_review: {
-    className: 'bg-indigo-50 text-indigo-700 ring-indigo-200',
-    icon: <ShieldCheck aria-hidden className="size-3" />,
-  },
+  paused: { className: 'bg-amber-50 text-amber-800 ring-amber-200', icon: <PauseCircle aria-hidden className="size-3" /> },
+  priority_review: { className: 'bg-rose-50 text-rose-700 ring-rose-200', icon: <AlertTriangle aria-hidden className="size-3" /> },
+  submitted: { className: 'bg-teal-50 text-teal-700 ring-teal-200', icon: <ShieldCheck aria-hidden className="size-3" /> },
   reviewed: { className: 'bg-emerald-50 text-emerald-700 ring-emerald-200', icon: <CheckCircle2 aria-hidden className="size-3" /> },
 }
 
-const PATIENT_STATUS_LABELS: Record<AssessmentStatusName, string> = {
-  in_progress: 'In progress',
-  interrupted: 'Paused',
-  awaiting_clinician_review: 'Submitted for review',
-  reviewed: 'Reviewed',
-}
-
-/** `patientFacing` uses friendlier wording than the clinical workflow state. */
-export function StatusBadge({ status, patientFacing = false }: { status: AssessmentStatusName | null; patientFacing?: boolean }) {
+/** Workflow status plus urgency, so a safety escalation never reads as a normal submission. */
+export function StatusBadge({ status, urgent = false }: { status: AssessmentStatusName | null; urgent?: boolean }) {
   if (!status) return null
-  const style = STATUS_STYLES[status]
+  const stage = displayStage(status, urgent)
+  const style = STAGE_STYLES[stage]
   return (
     <Badge className={style.className}>
       {style.icon}
-      {patientFacing ? PATIENT_STATUS_LABELS[status] : STATUS_LABELS[status]}
+      {STAGE_LABELS[stage]}
     </Badge>
   )
 }
@@ -71,7 +63,7 @@ export function Meter({ label, value, max = 100, detail, tone, hideLabel = false
         <label htmlFor={id} className="font-medium text-slate-600">
           {label}
         </label>
-        {detail !== undefined && <span className="tabular-nums text-slate-500">{detail}</span>}
+        {detail !== undefined && <span className="tabular-nums text-muted">{detail}</span>}
       </div>
       <progress id={id} className={cn('meter', tone ?? (value >= max ? 'complete' : undefined))} max={max} value={value} />
     </div>
@@ -90,7 +82,7 @@ export function ProgressRing({ value, label, size = '2.75rem' }: { value: number
         aria-label={label}
         style={{ '--value': rounded, '--size': size } as CSSProperties}
       />
-      <span aria-hidden className="absolute text-[11px] font-semibold tabular-nums text-ink">
+      <span aria-hidden className="absolute text-xs font-semibold tabular-nums text-ink">
         {rounded}%
       </span>
     </div>
@@ -103,11 +95,11 @@ export function ProgressRing({ value, label, size = '2.75rem' }: { value: number
 
 export function ErrorNotice({ message, onDismiss }: { message: string; onDismiss?: () => void }) {
   return (
-    <div role="alert" className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-      <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0" />
+    <div role="alert" className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-900">
+      <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-rose-600" />
       <p className="flex-1">{message}</p>
       {onDismiss && (
-        <button type="button" onClick={onDismiss} className="rounded p-0.5 hover:bg-rose-100" aria-label="Dismiss error">
+        <button type="button" onClick={onDismiss} className="rounded p-0.5 text-rose-700 hover:bg-rose-100" aria-label="Dismiss error">
           <X aria-hidden className="size-4" />
         </button>
       )}
@@ -115,13 +107,84 @@ export function ErrorNotice({ message, onDismiss }: { message: string; onDismiss
   )
 }
 
+/** Centred message for "nothing here yet", "choose something" and similar quiet states. */
 export function EmptyState({ icon, title, children }: { icon: ReactNode; title: string; children?: ReactNode }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 p-10 text-center">
-      <div className="rounded-2xl bg-teal-50 p-3 text-brand">{icon}</div>
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+      <div className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-brand">{icon}</div>
       <p className="text-base font-semibold text-ink">{title}</p>
-      {children && <div className="max-w-sm text-sm text-slate-500">{children}</div>}
+      {children && <div className="max-w-sm text-sm leading-relaxed text-muted">{children}</div>}
     </div>
+  )
+}
+
+export function Skeleton({ className }: { className?: string }) {
+  return <span aria-hidden className={cn('skeleton block', className)} />
+}
+
+/** Placeholder layout while a page loads; announced once to assistive tech. */
+export function LoadingState({ label, variant = 'page' }: { label: string; variant?: 'page' | 'chat' }) {
+  return (
+    <div role="status" className="mx-auto w-full max-w-5xl space-y-4 p-4 sm:p-6">
+      <span className="sr-only">{label}</span>
+      {variant === 'chat' ? (
+        <div className="mx-auto max-w-2xl space-y-4 pt-6">
+          <Skeleton className="h-16 w-3/4" />
+          <Skeleton className="ml-auto h-10 w-1/2" />
+          <Skeleton className="h-20 w-2/3" />
+        </div>
+      ) : (
+        <>
+          <div className={cn(CARD, 'flex items-center gap-4 p-5')}>
+            <Skeleton className="size-12 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-4 w-72" />
+            </div>
+          </div>
+          <div className={cn(CARD, 'space-y-3 p-5')}>
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Skeleton className="h-40 rounded-2xl" />
+            <Skeleton className="h-40 rounded-2xl" />
+            <Skeleton className="h-40 rounded-2xl" />
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+interface SectionCardProps {
+  title: string
+  icon?: ReactNode
+  /** Short context next to the title, e.g. a count. */
+  meta?: ReactNode
+  /** Right-aligned actions. */
+  actions?: ReactNode
+  id?: string
+  className?: string
+  children: ReactNode
+}
+
+/** The one card layout every content section uses: icon + title row, then the body. */
+export function SectionCard({ title, icon, meta, actions, id, className, children }: SectionCardProps) {
+  const headingId = useId()
+  return (
+    <section id={id} aria-labelledby={headingId} className={cn(CARD, className)}>
+      <header className="flex min-h-14 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line px-5 py-3">
+        <h2 id={headingId} className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+          {icon && <span className="text-brand [&>svg]:size-4">{icon}</span>}
+          {title}
+          {meta}
+        </h2>
+        {actions && <div className="flex items-center gap-1.5">{actions}</div>}
+      </header>
+      <div className="p-5">{children}</div>
+    </section>
   )
 }
 
@@ -182,7 +245,7 @@ export function Modal({ open, title, description, onClose, children, widthClass 
             {title}
           </h2>
           {description && (
-            <div id={descriptionId} className="text-sm text-slate-500">
+            <div id={descriptionId} className="text-sm text-muted">
               {description}
             </div>
           )}

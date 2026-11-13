@@ -14,7 +14,7 @@ export function DomainStepper({ progress }: DomainStepperProps) {
 
   return (
     <nav aria-label={`Topics: ${done} of 6 done`}>
-      <ol className="flex items-center">
+      <ol className="flex items-center gap-[3px] sm:gap-0">
         {ASSESSMENT_DOMAINS.map((domain, index) => {
           const meta = DOMAIN_META[domain]
           const state = progress[domain]?.completed ? 'done' : domain === current ? 'current' : 'todo'
@@ -24,13 +24,13 @@ export function DomainStepper({ progress }: DomainStepperProps) {
               {index > 0 && (
                 <span
                   aria-hidden
-                  className={cn('mx-1 h-px w-3 lg:w-5', progress[ASSESSMENT_DOMAINS[index - 1]]?.completed ? 'bg-brand' : 'bg-line')}
+                  className={cn('mx-1 hidden h-px w-3 sm:block lg:w-5', progress[ASSESSMENT_DOMAINS[index - 1]]?.completed ? 'bg-brand' : 'bg-line')}
                 />
               )}
               <span
                 title={`${index + 1}. ${meta.title}${state === 'done' ? ' · done' : state === 'current' ? ' · now' : ''}`}
                 className={cn(
-                  'flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 text-xs font-medium transition-colors',
+                  'flex items-center gap-1.5 rounded-full text-xs font-medium transition-colors sm:py-1 sm:pr-2.5 sm:pl-1',
                   state === 'current' && 'bg-teal-50 text-brand-strong ring-1 ring-teal-200',
                   state === 'done' && 'text-ink',
                   state === 'todo' && 'text-slate-400',
@@ -46,7 +46,7 @@ export function DomainStepper({ progress }: DomainStepperProps) {
                 >
                   {state === 'done' ? <Check aria-hidden className="size-3.5" strokeWidth={3} /> : <Icon aria-hidden className="size-3.5" />}
                 </span>
-                <span className={cn(state === 'current' ? 'inline' : 'hidden lg:inline')}>
+                <span className={cn('whitespace-nowrap', state === 'current' ? 'hidden sm:inline' : 'hidden md:inline')}>
                   {index + 1}. {meta.short}
                 </span>
                 <span className="sr-only">{state === 'done' ? ' (done)' : state === 'current' ? ' (now)' : ''}</span>

@@ -261,11 +261,14 @@ def run_assessment_turn(
                 accepted=False,
             )  # fmt: skip
 
-        before = len(graph.get_state(config).values.get("messages", []))
-        payload: dict[str, Any] = {
-            "messages": [nodes.stamp(HumanMessage(user_message))],
-            "session_id": session_id,
-        }
+        history = graph.get_state(config).values.get("messages", [])
+        before = len(history)
+        payload: dict[str, Any] = {"session_id": session_id}
+        # A resend of a message that never got a reply (the model failed, the request timed out) is a
+        # retry of that message, not a new one: run the turn again without appending a duplicate.
+        last = history[-1] if history else None
+        if not (isinstance(last, HumanMessage) and str(last.content) == user_message):
+            payload["messages"] = [nodes.stamp(HumanMessage(user_message))]
         if patient_alias:
             payload["patient_alias"] = patient_alias
         if llm_provider is not None:

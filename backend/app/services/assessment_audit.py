@@ -10,7 +10,7 @@ self-harm or harm-to-others mention escalates unless it is an explicit, narrow d
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -152,7 +152,72 @@ def _scores(data: AssessmentDomainData) -> _Scores:
     return _Scores(phq2, gad2)  # type: ignore[arg-type]
 
 
-def find_inconsistencies(data: AssessmentDomainData) -> list[Inconsistency]:
+_SELF_RATINGS = {
+    "overall_mood_rating", "perceived_stress_level", "energy_level", "hopelessness_level",
+    "phq_little_interest", "phq_feeling_down", "gad_nervous_anxious", "gad_uncontrollable_worry",
+}  # fmt: skip
+_UNITS = {
+    "overall_mood_rating": "/10",
+    "perceived_stress_level": "/10",
+    "energy_level": "/10",
+    "average_sleep_hours": "h",
+}
+
+
+def _fmt_answer(field: str, value: Any) -> str:
+    if isinstance(value, bool):
+        return "yes" if value else "no"
+    if isinstance(value, str):
+        return value.replace("_", " ")
+    return f"{value:g}{_UNITS.get(field, '')}"
+
+
+def find_inconsistencies(
+    data: AssessmentDomainData, revisions: Sequence[Mapping[str, Any]] = ()
+) -> list[Inconsistency]:
+    """Contradictions in the current answers, plus those an overwritten answer would hide.
+
+    `revisions` (AssessmentRecord.answer_revisions) lists stored answers that were later
+    replaced. The rules also run on the answers as first given, and every changed answer is
+    listed itself, so a clinician sees "stress 0/10" even if the interviewer later stored 10/10.
+    """
+    found = _rule_inconsistencies(data)
+    first: dict[tuple[str, str], Any] = {}
+    for rev in revisions:
+        first.setdefault((rev["domain"], rev["field"]), rev["previous"])
+    changed = {
+        key: original
+        for key, original in first.items()
+        if getattr(data.domain(D(key[0])), key[1]) != original
+    }
+    if not changed:
+        return found
+
+    raw = data.model_dump(mode="json")
+    for (domain, field), original in changed.items():
+        raw[domain][field] = original
+    codes = {item.code for item in found}
+    found += [
+        item
+        for item in _rule_inconsistencies(AssessmentDomainData.model_validate(raw))
+        if item.code not in codes
+    ]
+
+    for (domain, field), original in changed.items():
+        current = getattr(data.domain(D(domain)), field)
+        name = field.replace("_", " ").capitalize()
+        found.append(
+            Inconsistency(
+                code=f"changed_{field}",
+                domains=[D(domain)],
+                description=f"{name} first given as {_fmt_answer(field, original)} but later stored as {_fmt_answer(field, current)}.",
+                severity="high" if field in _SELF_RATINGS else "medium",
+            )
+        )
+    return found
+
+
+def _rule_inconsistencies(data: AssessmentDomainData) -> list[Inconsistency]:
     m, st, sl, a, f = data.mood, data.stress, data.sleep, data.anxiety, data.functioning
     scores = _scores(data)
     found: list[Inconsistency] = []
@@ -313,6 +378,59 @@ def scan_text_for_risk(text: str, domain: D = D.CONCERNS, *, source: str = "Wrot
                 )
             )
     return flags
+
+
+# ---------------------------------------------------------------------------
+# Answers to the safety question
+# ---------------------------------------------------------------------------
+
+# Wording of the guide's self-harm question and the interviewer's paraphrases of it.
+_SELF_HARM_TOPIC = re.compile(
+    r"\b((hurt|harm|kill)(ing)? (yourself|themselves)|better off (dead|not (being )?(here|around|alive))|"
+    r"end(ing)? (your|their) (own )?life|suicid\w*|self[- ]?harm\w*)",
+    re.IGNORECASE,
+)
+_YES_NO_ABOUT_THOUGHTS = re.compile(
+    r"^(have|has|do|did|are|were|is)\b.*\b(thoughts?|thought|thinking|felt|feel|feeling|considered|urges?)\b",
+    re.IGNORECASE,
+)
+# Only an explicit "no" is a denial. Same policy as the free-text scan: ambiguous answers escalate.
+_EXPLICIT_NO = re.compile(
+    r"^\s*(no|nope|never|not at all|none|i (have )?never|i haven'?t|i have not|not once)\b", re.IGNORECASE
+)
+_CONTRAST = re.compile(
+    r"\b(but|although|though|except|sometimes|occasionally|maybe|yes|used to|once|before)\b", re.IGNORECASE
+)
+_DECLINED = re.compile(
+    r"^\s*(i'?d rather not (say|answer)|i would rather not|prefer not to (say|answer)|skip|pass)\b",
+    re.IGNORECASE,
+)
+
+
+def scan_safety_answer(question: str, reply: str) -> list[RiskFlag]:
+    """A reply to the self-harm question that is not an explicit "no" is a disclosure.
+
+    The structured `self_harm_thoughts` answer is normally stored by the model; this makes the
+    escalation independent of it, so "Sometimes" or "not sure" can never slip through if the model
+    files the answer wrongly or not at all. Declining to answer raises nothing here: the question
+    then stays unanswered and is listed for the clinician as missing.
+    """
+    asked = [q.strip() for q in re.findall(r"[^.?!]*\?", question)]
+    if not asked or not _YES_NO_ABOUT_THOUGHTS.match(asked[-1]) or not _SELF_HARM_TOPIC.search(question):
+        return []
+    text = reply.strip()
+    if not text or _DECLINED.match(text) or (_EXPLICIT_NO.match(text) and not _CONTRAST.search(text)):
+        return []
+    return [
+        RiskFlag(
+            code="self_harm_thoughts",
+            level="critical",
+            domain=D.MOOD,
+            evidence=f'Answered "{text[:120]}" when asked about thoughts of self-harm.',
+            requires_immediate_escalation=True,
+            recommended_action=ESCALATE,
+        )
+    ]
 
 
 def find_risk_flags(data: AssessmentDomainData) -> list[RiskFlag]:

@@ -50,6 +50,8 @@ class Scenario:
 
     def __init__(self) -> None:
         self.interviewer_plan: dict[int, list[tuple[str, dict[str, Any]]]] = {}
+        #: Optional text of the interviewer's plain reply on a given turn (default: a placeholder).
+        self.interviewer_replies: dict[int, str] = {}
         self.summaries: list[dict[str, Any] | Callable[[list[BaseMessage]], dict[str, Any]]] = [CLEAN_SUMMARY]
         self.verdicts: list[dict[str, Any]] = [{"passed": True}]
         self._summary_calls = 0
@@ -61,7 +63,7 @@ class Scenario:
             turn = sum(isinstance(m, HumanMessage) for m in messages)
             if isinstance(messages[-1], HumanMessage) and (plan := self.interviewer_plan.get(turn)):
                 return AIMessage(content="", tool_calls=[tool_call(name, **args) for name, args in plan])
-            return AIMessage(content=f"Interviewer reply for turn {turn}")
+            return AIMessage(content=self.interviewer_replies.get(turn, f"Interviewer reply for turn {turn}"))
         if role == "summary":
             entry = self.summaries[min(self._summary_calls, len(self.summaries) - 1)]
             self._summary_calls += 1

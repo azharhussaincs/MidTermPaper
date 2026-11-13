@@ -1,5 +1,6 @@
 import {
   CheckCircle2,
+  ChevronRight,
   ClipboardList,
   Cloud,
   Cpu,
@@ -7,6 +8,7 @@ import {
   Loader2,
   RefreshCw,
   ServerCrash,
+  Sparkles,
   Stethoscope,
   X,
   XCircle,
@@ -18,7 +20,7 @@ import { buttonClass, cn } from '../lib/styles'
 import type { ProviderName, SystemStatus } from '../types/api'
 import { ErrorNotice } from './ui'
 
-export type Workspace = 'patient' | 'clinician'
+export type Workspace = 'home' | 'patient' | 'clinician'
 
 interface TopBarProps {
   workspace: Workspace
@@ -28,59 +30,93 @@ interface TopBarProps {
 
 export function TopBar({ workspace, onWorkspaceChange, awaitingReviewCount }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-md">
-      <div className="mx-auto grid h-16 grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-6">
-        <div className="flex items-center gap-2.5">
-          <div className="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-card">
-            <HeartHandshake aria-hidden className="size-5" />
-          </div>
-          <div className="hidden leading-tight sm:block">
-            <p className="text-[15px] font-semibold tracking-tight text-ink">MindBridge</p>
-            <p className="text-[11px] font-medium text-slate-500">Intake AI · Screening only</p>
-          </div>
-        </div>
+    <header className="sticky top-0 z-30 border-b border-line/80 bg-canvas/95 backdrop-blur-sm">
+      <div className="flex h-15 items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          onClick={() => onWorkspaceChange('home')}
+          aria-current={workspace === 'home' ? 'page' : undefined}
+          className="flex min-w-0 items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+          title="About MindBridge"
+        >
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand text-white">
+            <HeartHandshake aria-hidden className="size-[18px]" />
+          </span>
+          <span className="hidden font-display text-[19px] font-semibold tracking-tight text-ink sm:inline">MindBridge</span>
+          <span className="sr-only sm:hidden">MindBridge home</span>
+        </button>
 
-        {/* App navigation (not an ARIA tablist): aria-current marks the active workspace. */}
-        <nav aria-label="Workspace" className="justify-self-center">
-          <div className="flex rounded-full border border-line bg-slate-100/80 p-1">
-            <SegmentButton active={workspace === 'patient'} onClick={() => onWorkspaceChange('patient')}>
-              <ClipboardList aria-hidden className="size-4" />
-              <span className="hidden md:inline">Patient Assessment</span>
-              <span className="md:hidden">Patient</span>
-            </SegmentButton>
-            <SegmentButton active={workspace === 'clinician'} onClick={() => onWorkspaceChange('clinician')}>
-              <Stethoscope aria-hidden className="size-4" />
-              <span className="hidden md:inline">Clinician Review Portal</span>
-              <span className="md:hidden">Clinician</span>
-              {awaitingReviewCount > 0 && (
-                <span className="ml-0.5 grid min-w-5 place-items-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold leading-5 text-white tabular-nums">
-                  {awaitingReviewCount}
-                  <span className="sr-only"> awaiting review</span>
-                </span>
-              )}
-            </SegmentButton>
-          </div>
+        {/* The product's three stages, in order. Stage 2 runs automatically and is not a place to go. */}
+        <nav aria-label="MindBridge stages" className="mx-auto">
+          <ol className="flex items-center gap-1 sm:gap-2">
+            <li>
+              <StageLink active={workspace === 'patient'} onClick={() => onWorkspaceChange('patient')} n={1} icon={<ClipboardList aria-hidden className="size-4" />}>
+                <span className="hidden md:inline">Patient check-in</span>
+                <span className="md:hidden">Check-in</span>
+              </StageLink>
+            </li>
+            <StageArrow />
+            <li
+              className="hidden items-center gap-1.5 px-1 text-[13px] text-muted sm:flex"
+              title="Runs automatically: answers are organised, checked for gaps and contradictions, and screened for safety concerns"
+            >
+              <Sparkles aria-hidden className="size-4" />
+              <span className="hidden lg:inline">AI screening</span>
+            </li>
+            <StageArrow className="hidden sm:block" />
+            <li>
+              <StageLink active={workspace === 'clinician'} onClick={() => onWorkspaceChange('clinician')} n={3} icon={<Stethoscope aria-hidden className="size-4" />}>
+                <span className="hidden md:inline">Clinician review</span>
+                <span className="md:hidden">Review</span>
+                {awaitingReviewCount > 0 && <span className="sr-only">{'\u00a0·\u00a0'}</span>}
+                {awaitingReviewCount > 0 && (
+                  <span
+                    title={`${awaitingReviewCount} waiting for review`}
+                    className="grid min-w-5 place-items-center rounded-full bg-brand px-1.5 text-[11px] font-semibold leading-5 text-white tabular-nums"
+                  >
+                    {awaitingReviewCount}
+                    <span className="sr-only">{'\u00a0waiting for review'}</span>
+                  </span>
+                )}
+              </StageLink>
+            </li>
+          </ol>
         </nav>
 
-        <EngineControl />
+        {/* Model settings are a staff concern: shown only in the clinician workspace. */}
+        <div className="flex w-8 shrink-0 justify-end sm:w-auto">{workspace === 'clinician' && <EngineControl />}</div>
       </div>
     </header>
   )
 }
 
-function SegmentButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+function StageArrow({ className }: { className?: string }) {
+  return <ChevronRight aria-hidden className={cn('size-4 shrink-0 text-slate-300', className)} />
+}
+
+interface StageLinkProps {
+  active: boolean
+  onClick: () => void
+  n: number
+  icon: ReactNode
+  children: ReactNode
+}
+
+function StageLink({ active, onClick, n, icon, children }: StageLinkProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors sm:px-4',
+        'inline-flex h-9 items-center gap-2 rounded-full px-3 text-[13px] font-medium transition-colors sm:px-3.5',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
-        // Selected state uses a surface + shadow + weight change, not colour alone.
-        active ? 'bg-white text-ink shadow-card ring-1 ring-line' : 'text-slate-500 hover:text-ink',
+        active ? 'bg-white font-semibold text-ink shadow-card ring-1 ring-line/70' : 'text-muted hover:bg-white/60 hover:text-ink',
       )}
     >
+      {/* Non-breaking spaces: hidden text keeps its spacing when read aloud or copied. */}
+      <span className="sr-only">{`Step ${n}:\u00a0`}</span>
+      {icon}
       {children}
     </button>
   )
@@ -91,9 +127,9 @@ function SegmentButton({ active, onClick, children }: { active: boolean; onClick
 // ---------------------------------------------------------------------------
 
 const PROVIDERS: { value: ProviderName; label: string; hint: string }[] = [
-  { value: 'auto', label: 'Auto', hint: 'Local Ollama when ready, otherwise Gemini.' },
-  { value: 'local', label: 'Local (Ollama)', hint: 'Private, on-device inference.' },
-  { value: 'gemini', label: 'Google Gemini', hint: 'Cloud model; needs GEMINI_API_KEY on the server.' },
+  { value: 'auto', label: 'Automatic', hint: 'Uses the on-device model when ready, otherwise the cloud model.' },
+  { value: 'local', label: 'On this device (Ollama)', hint: 'Private: conversations stay on this computer.' },
+  { value: 'gemini', label: 'Cloud (Google Gemini)', hint: 'Needs a cloud key on the server.' },
 ]
 
 interface Pill {
@@ -106,20 +142,20 @@ function enginePill(status: SystemStatus | null, error: unknown): Pill {
   const spin = <Loader2 aria-hidden className="size-3.5 animate-spin motion-reduce:animate-none" />
   if (!status) {
     return error
-      ? { label: 'Backend offline', dot: 'bg-rose-500', icon: <ServerCrash aria-hidden className="size-3.5" /> }
+      ? { label: 'Assistant offline', dot: 'bg-rose-500', icon: <ServerCrash aria-hidden className="size-3.5" /> }
       : { label: 'Connecting…', dot: 'bg-slate-300', icon: spin }
   }
   const { llm } = status
   if (llm.local_setup === 'in_progress' && llm.active_provider !== 'local') {
-    return { label: 'Setting up local engine', dot: 'bg-amber-500', icon: spin }
+    return { label: 'Preparing assistant', dot: 'bg-amber-500', icon: spin }
   }
   if (llm.active_provider === 'local') {
-    return { label: `Local Ollama · ${llm.local_model}`, dot: 'bg-emerald-500', icon: <Cpu aria-hidden className="size-3.5" /> }
+    return { label: 'Assistant ready · on device', dot: 'bg-emerald-500', icon: <Cpu aria-hidden className="size-3.5" /> }
   }
   if (llm.active_provider === 'gemini') {
-    return { label: 'Gemini Connected', dot: 'bg-emerald-500', icon: <Cloud aria-hidden className="size-3.5" /> }
+    return { label: 'Assistant ready', dot: 'bg-emerald-500', icon: <Cloud aria-hidden className="size-3.5" /> }
   }
-  return { label: 'No AI engine', dot: 'bg-rose-500', icon: <XCircle aria-hidden className="size-3.5" /> }
+  return { label: 'Assistant unavailable', dot: 'bg-rose-500', icon: <XCircle aria-hidden className="size-3.5" /> }
 }
 
 function EngineControl() {
@@ -184,15 +220,15 @@ function EngineControl() {
         type="button"
         popoverTarget={panelId}
         className={cn(
-          'inline-flex h-8 max-w-[15rem] items-center gap-2 rounded-full border border-line bg-white px-3 text-xs font-medium text-slate-700 shadow-card',
-          'hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
+          'inline-flex h-8 max-w-[15rem] items-center gap-2 rounded-full px-2.5 text-[13px] font-medium text-muted hover:bg-slate-100 hover:text-ink',
+          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
         )}
       >
         <span aria-hidden className={cn('size-2 shrink-0 rounded-full', pill.dot)} />
-        <span className="hidden text-slate-400 sm:inline">{pill.icon}</span>
+        <span className="hidden text-muted sm:inline">{pill.icon}</span>
         <span className="hidden truncate sm:inline">{pill.label}</span>
         <span className="sr-only sm:hidden">{pill.label}</span>
-        <span className="sr-only">— engine settings</span>
+        <span className="sr-only">— assistant settings</span>
       </button>
 
       {/* Non-modal panel: the page stays usable; light-dismiss via popover="auto". */}
@@ -205,14 +241,14 @@ function EngineControl() {
       >
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <h2 id={titleId} className="text-sm font-semibold text-ink">
-            AI engine
+            AI assistant settings
           </h2>
           <button
             type="button"
             popoverTarget={panelId}
             popoverTargetAction="hide"
             className={buttonClass('ghost', 'sm')}
-            aria-label="Close engine settings"
+            aria-label="Close assistant settings"
           >
             <X aria-hidden className="size-4" />
           </button>
@@ -221,28 +257,28 @@ function EngineControl() {
         <div className="space-y-4 p-4">
           {llm ? (
             <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-xl bg-slate-50 p-3 text-xs">
-              <StatusItem ok={llm.ollama_installed} label="Ollama installed" />
-              <StatusItem ok={llm.ollama_running} label="Ollama running" />
+              <StatusItem ok={llm.ollama_installed} label="On-device engine installed" />
+              <StatusItem ok={llm.ollama_running} label="On-device engine running" />
               <StatusItem ok={llm.local_model_available} label={`Model ${llm.local_model}`} />
-              <StatusItem ok={llm.gemini_configured} label="Gemini key set" />
-              <StatusItem ok={status.tracing.enabled} label="LangSmith tracing" />
+              <StatusItem ok={llm.gemini_configured} label="Cloud key set" />
+              <StatusItem ok={status.tracing.enabled} label="Activity tracing" />
               <li className="text-slate-600">
-                Local setup: <span className="font-medium text-ink">{llm.local_setup.replace('_', ' ')}</span>
+                On-device setup: <span className="font-medium text-ink">{llm.local_setup.replace('_', ' ')}</span>
               </li>
             </ul>
           ) : (
-            <p className="text-sm text-slate-500">{pollError ? errorMessage(pollError) : 'Loading status…'}</p>
+            <p className="text-sm text-muted">{pollError ? errorMessage(pollError) : 'Loading status…'}</p>
           )}
           {llm?.local_setup_error && (
             <details className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
-              <summary className="cursor-pointer font-medium">Local setup failed</summary>
+              <summary className="cursor-pointer font-medium">On-device setup failed</summary>
               <p className="mt-1 max-h-32 overflow-y-auto break-words whitespace-pre-wrap">{llm.local_setup_error}</p>
             </details>
           )}
 
           <form onSubmit={onSubmit} className="space-y-3">
             <fieldset className="space-y-1.5">
-              <legend className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Provider</legend>
+              <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Provider</legend>
               {PROVIDERS.map((option) => {
                 const disabled = option.value === 'gemini' && llm ? !llm.gemini_configured : false
                 return (
@@ -265,8 +301,8 @@ function EngineControl() {
                     />
                     <span className="text-sm">
                       <span className="font-medium text-ink">{option.label}</span>
-                      <span className="block text-xs text-slate-500">
-                        {disabled ? 'Unavailable: GEMINI_API_KEY is not configured.' : option.hint}
+                      <span className="block text-xs text-muted">
+                        {disabled ? 'Not available: no cloud key is set on the server.' : option.hint}
                       </span>
                     </span>
                   </label>
@@ -275,8 +311,8 @@ function EngineControl() {
             </fieldset>
 
             <div className="space-y-1">
-              <label htmlFor={`${panelId}-model`} className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Local model
+              <label htmlFor={`${panelId}-model`} className="text-xs font-semibold uppercase tracking-wider text-muted">
+                On-device model
               </label>
               <input
                 id={`${panelId}-model`}
@@ -293,14 +329,14 @@ function EngineControl() {
                 <option value="llama3.2" />
                 <option value="llama3.1:8b" />
               </datalist>
-              <p id={modelHintId} className="text-xs text-slate-500">
-                Must support tool calling. Missing models are pulled automatically.
+              <p id={modelHintId} className="text-xs text-muted">
+                Missing models download automatically.
               </p>
             </div>
 
             {error && <ErrorNotice message={error} onDismiss={() => setError(null)} />}
             <p role="status" className="text-xs text-emerald-700">
-              {saved ? 'Engine configuration updated.' : ''}
+              {saved ? 'Settings saved.' : ''}
             </p>
 
             <div className="flex flex-wrap justify-between gap-2">
@@ -311,7 +347,7 @@ function EngineControl() {
                 className={buttonClass('secondary', 'sm')}
               >
                 <RefreshCw aria-hidden className={cn('size-3.5', busy === 'recheck' && 'animate-spin motion-reduce:animate-none')} />
-                Re-check local engine
+                Check on-device engine
               </button>
               <button type="submit" disabled={busy !== null} className={buttonClass('primary', 'sm')}>
                 {busy === 'apply' && <Loader2 aria-hidden className="size-3.5 animate-spin motion-reduce:animate-none" />}
